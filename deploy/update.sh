@@ -38,6 +38,8 @@ fi
 
 cd "$REPO"
 git fetch --quiet origin main
+# Heartbeat: shows the schedule is running even when there's nothing to deploy.
+date '+%F %T' > "$BASE/logs/last-check"
 local_rev=$(git rev-parse HEAD)
 remote_rev=$(git rev-parse origin/main)
 running=$(compose ps -q lavie 2>/dev/null || true)

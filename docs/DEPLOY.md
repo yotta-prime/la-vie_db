@@ -90,11 +90,17 @@ sudo sh /volume1/docker/lavie/repo/deploy/update.sh --force
 - **Schedule**: Run on the following days = **Daily**; First run time `00:00`; Frequency **Every 15 minutes**; Last run time `23:45`.
 - **Task Settings → Run command**:
   ```sh
-  sh /volume1/docker/lavie/repo/deploy/update.sh >> /volume1/docker/lavie/logs/update.log 2>&1
+  /bin/bash /volume1/docker/lavie/repo/deploy/update.sh >> /volume1/docker/lavie/logs/update.log 2>&1
   ```
   Optionally tick *Send run details by email → only when the script terminates abnormally*.
 
-Select the task and click **Run** once to check it. `logs/update.log` stays empty when nothing changed and gets a line per deploy.
+Select the task and click **Run** once to check it. `logs/update.log` stays empty when nothing changed and gets a line per deploy. `logs/last-check` holds the time of the latest check, so you can confirm the schedule is running:
+
+```sh
+sudo cat /volume1/docker/lavie/logs/last-check   # should be less than 15 minutes old
+```
+
+If it isn't updating, check that the schedule says **Daily** with **Every 15 minutes**, not a single date or once a day. The command uses full paths (`/bin/bash`, `/volume1/...`), following Synology's [Task Scheduler scripting tips](https://kb.synology.com/en-uk/DSM/tutorial/common_mistake_in_task_scheduler_script).
 
 ### 6. Lock down
 
