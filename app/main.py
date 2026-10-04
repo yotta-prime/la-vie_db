@@ -1,12 +1,15 @@
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI
 
 from app.bot import Bot
 from app.config import get_settings
 from app.db import Database
-from app.defaults import seed_settings
+from app.defaults import seed_content, seed_settings
+from app.engine import Engine
 from app.models import Setting
 from app.scheduler import build_scheduler
 
@@ -23,14 +26,21 @@ async def lifespan(app: FastAPI):
     db = Database(f"sqlite:///{settings.db_path}")
     db.create_all()
     seed_settings(db)
+    seed_content(db)
 
     with db.session() as s:
         backup_time = s.get(Setting, "backup_time").value
 
-    scheduler = build_scheduler(settings, backup_time)
+    tz = ZoneInfo(settings.timezone)
+    engine = Engine(db, tz)
+    bot = Bot(settings, engine)
+
+    def plan_today() -> None:
+        engine.plan_day(datetime.now(tz).date())
+
+    scheduler = build_scheduler(settings, backup_time, plan_today=plan_today, dispatch=bot.dispatch_due)
     scheduler.start()
 
-    bot = Bot(settings)
     await bot.start()
 
     app.state.db, app.state.bot, app.state.scheduler = db, bot, scheduler

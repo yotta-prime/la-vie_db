@@ -17,12 +17,30 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from app.db import Base
 
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class UTCDateTime(TypeDecorator):
+    """Stores datetimes as UTC and returns them timezone-aware (SQLite drops tzinfo)."""
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            raise ValueError("naive datetime; use timezone-aware values")
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+    def process_result_value(self, value, dialect):
+        return None if value is None else value.replace(tzinfo=timezone.utc)
 
 
 def _enum(cls: type[enum.Enum]) -> Enum:
@@ -130,7 +148,7 @@ class LearningPath(Base):
     kind: Mapped[PathKind] = mapped_column(_enum(PathKind))
     daily_goal_min: Mapped[int | None]  # for TIME paths
     active: Mapped[bool] = mapped_column(default=True)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
     steps: Mapped[list["PathStep"]] = relationship(
         back_populates="path", order_by="PathStep.position", cascade="all, delete-orphan"
@@ -148,7 +166,7 @@ class PathStep(Base):
     position: Mapped[int]
     title: Mapped[str] = mapped_column(String(200))
     detail: Mapped[str | None] = mapped_column(Text)
-    done_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
     path: Mapped[LearningPath] = relationship(back_populates="steps")
 
@@ -162,7 +180,7 @@ class Flashcard(Base):
     back: Mapped[str] = mapped_column(Text)
     # Serialized FSRS card state; `due` is duplicated as a column for querying.
     fsrs_state: Mapped[dict | None] = mapped_column(JSON)
-    due: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    due: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
 
     path: Mapped[LearningPath] = relationship(back_populates="flashcards")
 
@@ -235,8 +253,8 @@ class Pause(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     area: Mapped[Area | None] = mapped_column(_enum(Area))
-    until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # NULL = until /resume
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    until: Mapped[datetime | None] = mapped_column(UTCDateTime)  # NULL = until /resume
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
 # --- Prompts and logs ---------------------------------------------------------
@@ -249,8 +267,8 @@ class Prompt(Base):
     area: Mapped[Area] = mapped_column(_enum(Area))
     kind: Mapped[str] = mapped_column(String(40))  # e.g. "routine", "micro_move", "intention"
     payload: Mapped[dict | None] = mapped_column(JSON)  # item ids / rendered context
-    scheduled_for: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    scheduled_for: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
+    sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     telegram_message_id: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[PromptStatus] = mapped_column(
         _enum(PromptStatus), default=PromptStatus.SCHEDULED
@@ -261,7 +279,7 @@ class LogEntry(Base):
     __tablename__ = "log_entry"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
     area: Mapped[Area] = mapped_column(_enum(Area))
     prompt_id: Mapped[int | None] = mapped_column(ForeignKey("prompt.id", ondelete="SET NULL"))
 
