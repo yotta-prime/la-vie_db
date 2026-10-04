@@ -9,6 +9,9 @@ services:
     image: lavie:latest
     container_name: lavie
     restart: unless-stopped
+    # Time to shut down cleanly on deploy (the bot finishes its current Telegram request)
+    # before Docker kills it, which DSM would report as "stopped unexpectedly".
+    stop_grace_period: 30s
     env_file:
       - ${LAVIE_ENV_FILE:-.env}
     environment:

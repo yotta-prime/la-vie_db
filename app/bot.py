@@ -107,7 +107,8 @@ class Bot:
         if self.engine is not None:
             await self.app.bot.set_my_commands([BotCommand(c, d) for c, d in COMMANDS])
         await self.app.start()
-        await self.app.updater.start_polling(drop_pending_updates=True)
+        # Short long-poll timeout so shutdown (which waits for the pending request) is quick.
+        await self.app.updater.start_polling(drop_pending_updates=True, timeout=5)
         log.info("Telegram bot polling")
 
     async def stop(self) -> None:
