@@ -2340,5 +2340,205 @@ The `debug` folder isn't showing as untracked, which suggests one of my recent `
 <details><summary>Tool calls</summary>
 
 - *PowerShell*: Check whether debug folder was committed
+- *Write*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\export_chat.py
+- *PowerShell*: Export transcript to markdown and scan for secrets
+
+</details>
+
+The secrets scan is clean. I'll spot-check the formatting at the start and somewhere in the middle.
+
+<details><summary>Tool calls</summary>
+
+- *Read*: docs\chat-history\2026-10-04_la-vie-build-session.md
+- *Grep*: ADMIN_PASSWORD=\[redacted\]|Answers:
+
+</details>
+
+The export reads well, and the interview answers and redaction both came through correctly. Now I'll stop tracking `debug/`, commit the history and push:
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Untrack debug/, commit chat history, push
+- *PowerShell*: Confirm local and GitHub in sync
+
+</details>
+
+The chat history is saved and your PC and GitHub are in sync on `ed093b0`, with nothing uncommitted. The NAS will pick up the commit by itself at the next quarter-hour, though there's no app change in it.
+
+**The chat history** is in `docs/chat-history/2026-10-04_la-vie-build-session.md`, covering the session up to the commit before this message.
+- **Included:** your messages and mine, word for word, with times. Your answers to the interview questions are included, and terminal output you pasted is shown as code blocks.
+- **Left out:** tool output and internal system notes. Each tool call I made is listed as one line in a collapsible "Tool calls" section.
+- **Redacted:** the admin password you pasted earlier, even though it's since been replaced. I checked that no bot token or GitHub token appears anywhere in it.
+
+**What becomes public:** `la-vie_db` is a public repo, so anyone can read this history. It includes your DSM username (`TechOne`), the NAS's home-network address (`192.168.0.198`), and how the server is set up. None of that gives access on its own, since port 8080 and SSH aren't reachable from the internet. If you'd rather keep it private, the simplest fix is to make the repo private, and the NAS would then need a read-only access key; the steps are in `docs/DEPLOY.md`.
+
+**The `debug/` folder:** your Word document is still on your PC, and `debug/` is now excluded from git, so this won't happen again. But commit `fb1c5ed` still contains it in the repo's history. Removing it from history means rewriting history and force-pushing to GitHub, and the NAS copy would need resetting afterwards. Making the repo private would also hide it. Should I remove it from history, or leave it as it is?
+
+## You · 20:26
+
+SSH is disabled on DSM. Enable 2FA on GH?
+
+## Claude · 20:26
+
+Good, with SSH off the NAS is more locked down. I'll check whether GitHub two-factor login is already on for your account.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check GitHub 2FA status
+
+</details>
+
+Yes, turn it on. Your GitHub account is the one thing that can change what runs on your NAS, since anything pushed to `main` is deployed within 15 minutes. I can't see whether it's already on: GitHub returned "unknown" because the CLI's access doesn't include account settings. You'll have to check in the browser, which takes about 5 minutes:
+
+1. Go to **github.com → your profile picture → Settings → Password and authentication**.
+2. If it says **Two-factor authentication: Enabled**, you're done. Otherwise, click **Enable two-factor authentication**.
+3. Pick a method:
+   - **Authenticator app** (TOTP). Your password manager can probably store this code alongside your GitHub password.
+   - **Passkey**, as well or instead. This uses Windows Hello or your phone, with nothing to type.
+4. **Save the recovery codes** in your password manager. They're the only way back in if you lose your phone.
+
+**Nothing else needs changing.** The GitHub CLI and `git push` on your PC use a saved login token, not your password, so they keep working. The NAS pulls the public repo without logging in, so it's unaffected too.
+
+**About branch protection on `main`,** which I suggested earlier: requiring pull requests would also block the direct pushes we've been doing all day. Every change would need a pull request that you merge. For a single-person repo, two-factor login gives you most of the protection without the extra steps. My suggestion is to turn on two-factor now and skip branch protection unless others get write access.
+
+That still leaves the **firewall rule** for port 8080 and the **Hyper Backup** job on the NAS.
+
+## You · 20:30
+
+GH 2FA enabled. _la vie task deleted
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Confirm GitHub access still works after 2FA
+
+</details>
+
+## Claude · 20:30
+
+Your GitHub account now has two-factor login, the old task is gone, and SSH is off. I checked that the CLI is still logged in and can still reach the repo after the change, so pushing from here works as before.
+
+**Two security items left on the NAS:**
+1. **Firewall:** go to **Control Panel → Security → Firewall** and turn it on if it's off. Edit the rules to allow port **8080** from **192.168.0.0/24** only, and keep a rule for DSM's own ports (5000/5001) so you don't lock yourself out of DSM.
+2. **Hyper Backup:** add `docker/lavie/data/backups` to a backup job, ideally one that copies to another drive or the cloud.
+
+**Two decisions for you:**
+- **`debug/` in the repo history:** leave it, or remove it by rewriting history? It needs a force-push, and I'd also reset the NAS copy afterwards.
+- **What's next on the code:** the admin page changes you mentioned (what bothers you about it?), flashcard reviews in Telegram, or CSV export.
+
+## You · 20:32
+
+I'm getting an event in DSM - Container lavie stopped unexpectedly - please check this?
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check whether the container is up
+- *Edit*: docker-compose.yml
+- *Edit*: app\bot.py
+- *PowerShell*: Verify start_polling timeout param and run tests
+
+</details>
+
+## Claude · 20:32
+
+That confirms the cause. The library's default request time is **10 seconds**, exactly the same as Docker's stop deadline, so shutdown regularly ran over it. All 35 tests pass. Pushing:
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Commit and push shutdown fix
+- *PowerShell*: Watch NAS for deploy of shutdown fix
+
+</details>
+
+I've pushed the fix as `977520f`. The NAS should deploy it at the 20:45 run, and I'm watching for it from here.
+
+- **This deploy may raise one last warning.** The container being replaced is still the old one, with the 10-second limit. From the deploy after this on, shutdowns should be clean and the warnings should stop.
+- **Each commit restarts the bot.** Every deploy, even a docs-only one, restarts it for a few seconds, because the version number changes. Prompts aren't lost: anything due during the restart is sent once it's back.
+
+Please tell me the time on the DSM event. If it's about **20:30** (or another deploy time), that confirms the cause. If it's a time with no deploy, the app actually crashed, and I'll investigate that instead.
+
+## You · 20:34
+
+time on event is 20:30:45
+
+## Claude · 20:34
+
+That confirms it. The 20:30 scheduled run built the new image in about 30 seconds, then told the old container to stop. It hadn't finished within 10 seconds, so Docker killed it at **20:30:45**, and DSM logged that as "stopped unexpectedly". The new container started straight after, which is why `/health` was fine at 20:32. It wasn't a crash; the old container was killed during the update.
+
+The fix (`977520f`) should deploy at 20:45. As I said, that one may still produce a final warning, because it's the old container being replaced. After that, deploys shouldn't trigger it. I'll tell you when my watcher sees the new version. If you get another "stopped unexpectedly" from a later deploy, let me know.
+
+## You · 20:35
+
+thanks for the check/double check and always worth reminding me what's going on at each iteration...
+
+<details><summary>Tool calls</summary>
+
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\recap-and-verify-each-step.md
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\la-vie-nas-deploy.md
+- *PowerShell*: Check existing memory index
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\MEMORY.md
+- *PowerShell*: Check deploy watcher status
+
+</details>
+
+## Claude · 20:35
+
+Noted. I've saved it to memory, so future sessions will keep doing both: a short recap at the end of each step, and checking results myself where I can, for example confirming deploys through `/health`. I also saved the NAS deploy details and the problems we hit today, so a new session won't have to rediscover them.
+
+**Where things stand (20:36):**
+
+| Where | State |
+|---|---|
+| Your PC | `977520f` (the shutdown fix), nothing uncommitted |
+| GitHub `main` | `977520f` |
+| NAS | `ed093b0`, healthy, bot running. It picks up `977520f` at the **20:45** run; my watcher is checking every 30 seconds. |
+
+**Since the last recap:**
+- **"Stopped unexpectedly" at 20:30:45:** explained. The old container was killed during the update, not crashed. The fix is pushed.
+- **GitHub:** two-factor login is on, and pushing still works.
+- **DSM:** SSH is off, and the old `_lavie update` task is deleted.
+
+**Waiting on you:**
+- **Firewall** rule for port 8080 (home network only).
+- **Hyper Backup** job for `docker/lavie/data/backups`.
+- **Decide on `debug/` in the repo history:** leave it, or remove it with a history rewrite.
+- **Tell me what to change** in the admin page.
+
+**Next on my side:** I'll confirm the 20:45 deploy when the watcher reports. After that: your admin page changes, then flashcard reviews in Telegram, then CSV export.
+
+## You · 20:38
+
+Re: firewall and ports - I have a *lot* of ports
+
+## Claude · 20:38
+
+You don't need to touch your other ports. DSM's firewall checks rules top to bottom and stops at the first match. If nothing matches, it falls back to a default, which you can leave on **Allow**. So two rules covering only port 8080 are enough, and everything else behaves exactly as now.
+
+**Control Panel → Security → Firewall → Edit Rules → Create:**
+
+| Order | Ports | Source IP | Action |
+|---|---|---|---|
+| 1 | Custom → TCP **8080** | Specific IP → Subnet **192.168.0.0 / 255.255.255.0** | **Allow** |
+| 2 | Custom → TCP **8080** | **All** | **Deny** |
+
+- Put these two at the **top** of the list, in this order.
+- Leave **"If no rules are matched"** set to **Allow**, so all your other services are untouched.
+- Click **OK**, then **Apply**.
+
+**Two caveats:**
+- **The router matters more.** Port 8080 can only be reached from the internet if your router forwards it. Check your router's port forwarding for **8080**, and switch off UPnP if you don't need it, since UPnP lets devices open ports by themselves. If nothing forwards 8080, the admin page is already home-network-only, and the firewall rule is a second layer.
+- **Docker might bypass the DSM firewall.** On some DSM versions, ports published by Docker aren't fully covered by the DSM firewall. I'm not certain how yours behaves, which is another reason the router check comes first.
+
+After you add the rules, I'll check from your PC, which is on the home network, that `http://192.168.0.198:8080/health` still answers. That confirms the Allow rule works and you haven't locked yourself out. I'll also report the 20:45 deploy when the watcher sees it.
+
+## You · 20:41
+
+I'm going to hold off on the firewall item until tomorrow, as always, add a memory to svae chat history and sync all (locally, GH and include in deploy package). Thanks
+
+<details><summary>Tool calls</summary>
+
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\end-of-session-chat-history.md
+- *Edit*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\la-vie-nas-deploy.md
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\MEMORY.md
+- *PowerShell*: Check 977520f deploy status
 
 </details>
