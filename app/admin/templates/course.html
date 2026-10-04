@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% from "_macros.html" import url_link, rule_form %}
+{% block content %}
+<p><a href="/admin/learning">← Learning</a>{% if c.path %} · <a href="/admin/paths/{{ c.path.id }}">{{ c.path.name }}</a>{% endif %}</p>
+<h1 class="{{ 'done' if c.completed_at }}">{{ c.name }}</h1>
+
+<section>
+  <form method="post" action="/admin/courses/{{ c.id }}">
+    <div class="grid">
+      <div><label>Name</label><input type="text" name="name" value="{{ c.name }}" required></div>
+      <div>
+        <label>Learning path</label>
+        <select name="path_id">
+          <option value="">(individual course)</option>
+          {% for p in paths %}<option value="{{ p.id }}" {{ 'selected' if c.path_id == p.id }}>{{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Category</label>
+        <select name="category">
+          {% for cat in Category %}<option value="{{ cat.value }}" {{ 'selected' if c.category == cat }}>{{ cat.value|title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Type</label>
+        <select name="kind">
+          {% for k, label in [("steps", "Lessons in order"), ("time", "Time goal"), ("srs", "Flashcards")] %}
+          <option value="{{ k }}" {{ 'selected' if c.kind.value == k }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div><label>Daily goal (min, for time goal)</label><input type="number" name="daily_goal_min" min="1" value="{{ c.daily_goal_min or '' }}"></div>
+    </div>
+    <div style="margin-top:10px"><label>Course link</label><input type="url" name="url" value="{{ c.url or '' }}" placeholder="https://…"></div>
+    <div style="margin-top:10px"><label>Notes</label><textarea name="notes">{{ c.notes or '' }}</textarea></div>
+    <div class="actions">
+      <label class="check"><input type="checkbox" name="active" {{ 'checked' if c.active }}> Active</label>
+      <button class="primary">Save</button>
+      {{ url_link(c.url, "Open course ↗") }}
+    </div>
+  </form>
+  <form method="post" action="/admin/courses/{{ c.id }}/action" class="actions">
+    {% if c.completed_at %}
+      <span class="muted">Completed {{ c.completed_at.strftime("%d %b %Y") }}.</span>
+      <button name="action" value="reopen">Reopen</button>
+    {% else %}
+      <button name="action" value="complete">Mark course complete</button>
+    {% endif %}
+  </form>
+</section>
+
+{% if c.kind.value == "steps" %}
+<section id="lessons">
+  <h2>Lessons</h2>
+  <p class="muted">Each learning prompt offers the next unfinished lesson. Finishing the last one completes the course.</p>
+  <ul class="list">
+    {% for st in c.steps %}
+    <li>
+      <form method="post" action="/admin/course-steps/{{ st.id }}" class="row">
+        <button class="icon" name="action" value="toggle" title="Toggle done">{{ "☑" if st.done_at else "☐" }}</button>
+        <input class="grow {{ 'done' if st.done_at }}" type="text" name="title" value="{{ st.title }}">
+        <input class="grow" type="url" name="url" value="{{ st.url or '' }}" placeholder="Link (optional)">
+        <input type="hidden" name="detail" value="{{ st.detail or '' }}">
+        <button class="icon">Save</button>
+        <button class="icon" name="action" value="up" title="Move up">↑</button>
+        <button class="icon" name="action" value="down" title="Move down">↓</button>
+        <button class="icon danger" name="action" value="delete">Delete</button>
+        {{ url_link(st.url, "open") }}
+      </form>
+    </li>
+    {% else %}
+    <li class="muted">No lessons yet.</li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/admin/courses/{{ c.id }}/steps" style="margin-top:12px">
+    <label>Add lessons: one per line (paste a table of contents)</label>
+    <textarea name="title" placeholder="1. Introduction&#10;2. Core concepts" required></textarea>
+    <div class="row" style="margin-top:8px">
+      <input class="grow" type="url" name="url" placeholder="Link (used when adding a single lesson)">
+      <button class="primary">Add</button>
+    </div>
+  </form>
+</section>
+{% elif c.kind.value == "srs" %}
+<section id="cards">
+  <h2>Flashcards</h2>
+  <p class="muted">Reviews in Telegram arrive in a later version; cards added now will be ready.</p>
+  <table>
+    {% for f in c.flashcards %}
+    <tr><td>{{ f.front }}</td><td>{{ f.back }}</td>
+      <td style="width:1%"><form method="post" action="/admin/cards/{{ f.id }}/delete"><button class="icon danger">Delete</button></form></td></tr>
+    {% else %}
+    <tr><td class="muted">No cards yet.</td></tr>
+    {% endfor %}
+  </table>
+  <form method="post" action="/admin/courses/{{ c.id }}/cards" class="row" style="margin-top:12px">
+    <input class="grow" type="text" name="front" placeholder="Front" required>
+    <input class="grow" type="text" name="back" placeholder="Back" required>
+    <button class="primary">Add card</button>
+  </form>
+</section>
+{% endif %}
+
+{{ rule_form("/admin/rules/course/" ~ c.id, rule) }}
+
+<form method="post" action="/admin/courses/{{ c.id }}/action" onsubmit="return confirm('Delete this course and its lessons?')">
+  <button class="danger" name="action" value="delete">Delete course</button>
+</form>
+{% endblock %}

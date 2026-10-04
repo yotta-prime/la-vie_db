@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Hobbies</h1>
+<section>
+  <ul class="list">
+    {% for h in hobbies %}
+    {% set open = h.projects|rejectattr("done_at")|list %}
+    <li class="row">
+      <a class="grow" href="/admin/hobbies/{{ h.id }}">{{ h.name }}</a>
+      <span class="chip">{{ open|length }} open project{{ 's' if open|length != 1 }}</span>
+      {% set locked = open|rejectattr("unlocked")|list %}
+      {% if locked %}<span class="chip">{{ locked|length }} locked</span>{% endif %}
+      {% if not h.active %}<span class="chip">inactive</span>{% endif %}
+    </li>
+    {% else %}
+    <li class="muted">No hobbies yet.</li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/admin/hobbies" class="row" style="margin-top:12px">
+    <input class="grow" type="text" name="name" placeholder="New hobby" required>
+    <button class="primary">Add hobby</button>
+  </form>
+</section>
+{% endblock %}

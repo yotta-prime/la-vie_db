@@ -29,9 +29,10 @@ class Database:
         self.SessionLocal = sessionmaker(self.engine, expire_on_commit=False)
 
     def create_all(self) -> None:
-        from app import models  # noqa: F401  (register tables)
+        """Create a fresh schema, or migrate an existing database to the latest version."""
+        from app.migrations import migrate
 
-        Base.metadata.create_all(self.engine)
+        migrate(self.engine)
 
     @contextmanager
     def session(self) -> Iterator[Session]:

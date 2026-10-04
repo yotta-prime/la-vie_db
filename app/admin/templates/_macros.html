@@ -1,0 +1,72 @@
+{% macro url_link(url, label="link") -%}
+  {% if url %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>{% endif %}
+{%- endmacro %}
+
+{% macro rule_form(action, rule) %}
+<section id="schedule">
+  <h2>Schedule</h2>
+  <p class="muted">How often this comes up. Without settings here it uses round-robin.</p>
+  <form method="post" action="{{ action }}">
+    <div class="grid">
+      <div>
+        <label>Method</label>
+        <select name="method">
+          {% for m, label in [("round_robin", "Round-robin"), ("neglect", "Weighted by neglect"), ("weekday_slots", "Fixed weekdays")] %}
+          <option value="{{ m }}" {{ 'selected' if rule and rule.method.value == m }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Sessions per week</label>
+        <input type="number" name="sessions_per_week" min="1" max="7" value="{{ rule.sessions_per_week if rule and rule.sessions_per_week }}">
+      </div>
+      <div>
+        <label>Priority (weight)</label>
+        <input type="number" name="weight" step="0.1" min="0.1" value="{{ rule.weight if rule else 1 }}">
+      </div>
+      <div>
+        <label>Start date</label>
+        <input type="date" name="start_date" value="{{ rule.start_date if rule and rule.start_date }}">
+      </div>
+      <div>
+        <label>End date</label>
+        <input type="date" name="end_date" value="{{ rule.end_date if rule and rule.end_date }}">
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>Weekdays (for fixed weekdays)</label>
+      <div class="row">
+        {% for d in WEEKDAYS %}
+        <label class="check"><input type="checkbox" name="weekdays" value="{{ loop.index0 }}"
+          {{ 'checked' if rule and rule.weekdays and loop.index0 in rule.weekdays }}> {{ d }}</label>
+        {% endfor %}
+      </div>
+    </div>
+    <p class="muted">Dates limit when these settings apply; outside them it goes back to round-robin.</p>
+    <div class="actions">
+      <button class="primary">Save schedule</button>
+      {% if rule %}<button name="action" value="reset">Reset to default</button>{% endif %}
+    </div>
+  </form>
+</section>
+{% endmacro %}
+
+{% macro requirement_select(name, selected_course, selected_path, courses, paths) %}
+<select name="{{ name }}">
+  <option value="">No requirement</option>
+  {% if paths %}
+  <optgroup label="Whole learning path">
+    {% for p in paths %}
+    <option value="path:{{ p.id }}" {{ 'selected' if selected_path == p.id }}>{{ p.name }}</option>
+    {% endfor %}
+  </optgroup>
+  {% endif %}
+  {% if courses %}
+  <optgroup label="Course">
+    {% for c in courses %}
+    <option value="course:{{ c.id }}" {{ 'selected' if selected_course == c.id }}>{{ c.name }}{% if c.path %} ({{ c.path.name }}){% endif %}</option>
+    {% endfor %}
+  </optgroup>
+  {% endif %}
+</select>
+{% endmacro %}

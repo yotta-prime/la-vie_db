@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/learning">← Learning</a></p>
+<h1>{{ p.name }}</h1>
+
+<section>
+  <form method="post" action="/admin/paths/{{ p.id }}">
+    <div class="grid">
+      <div><label>Name</label><input type="text" name="name" value="{{ p.name }}" required></div>
+      <div>
+        <label>Category</label>
+        <select name="category">
+          {% for c in Category %}<option value="{{ c.value }}" {{ 'selected' if p.category == c }}>{{ c.value|title }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px"><label>Description</label><textarea name="description">{{ p.description or '' }}</textarea></div>
+    <div class="actions">
+      <label class="check"><input type="checkbox" name="sequential" {{ 'checked' if p.sequential }}> Courses in order (only the next unfinished one is suggested)</label>
+      <label class="check"><input type="checkbox" name="active" {{ 'checked' if p.active }}> Active</label>
+      <button class="primary">Save</button>
+    </div>
+  </form>
+</section>
+
+<section>
+  <h2>Courses</h2>
+  <ul class="list">
+    {% for c in p.courses %}
+    <li class="row">
+      <span class="muted">{{ loop.index }}.</span>
+      <a class="grow {{ 'done' if c.completed_at }}" href="/admin/courses/{{ c.id }}">{{ c.name }}</a>
+      {% if c.completed_at %}<span class="chip">complete</span>{% endif %}
+      <form method="post" action="/admin/courses/{{ c.id }}/action" class="inline">
+        <button class="icon" name="action" value="up" title="Move up">↑</button>
+        <button class="icon" name="action" value="down" title="Move down">↓</button>
+      </form>
+    </li>
+    {% else %}
+    <li class="muted">No courses yet.</li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/admin/courses" class="row" style="margin-top:10px">
+    <input type="hidden" name="path_id" value="{{ p.id }}">
+    <input class="grow" type="text" name="name" placeholder="New course" required>
+    <select name="kind" style="width:auto">
+      <option value="steps">Lessons</option><option value="time">Time goal</option><option value="srs">Flashcards</option>
+    </select>
+    <button class="primary">Add course</button>
+  </form>
+</section>
+
+<form method="post" action="/admin/paths/{{ p.id }}/delete" onsubmit="return confirm('Delete this path? Its courses are kept as individual courses.')">
+  <button class="danger">Delete path</button>
+</form>
+{% endblock %}

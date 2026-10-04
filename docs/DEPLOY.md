@@ -102,6 +102,18 @@ Select the task and click **Run** once to check it. `logs/update.log` stays empt
 - **Firewall** (Control Panel → Security → Firewall): allow port **8080** only from your LAN subnet (e.g. `192.168.1.0/24`). Never forward 8080 on your router.
 - **Hyper Backup**: include `docker/lavie/data/backups`. The app writes a consistent DB copy there at 03:00 each night.
 
+### 7. Admin page
+
+Add a password to the secrets file. It's generated on the NAS, so nothing has to be typed or pasted:
+
+```sh
+sudo sh -c 'umask 077; echo "ADMIN_PASSWORD=$(head -c 18 /dev/urandom | base64)" >> /volume1/docker/lavie/secrets/.env'
+sudo grep ADMIN_PASSWORD /volume1/docker/lavie/secrets/.env   # copy it into your password manager
+sudo sh /volume1/docker/lavie/repo/deploy/update.sh --force
+```
+
+Then open `http://<nas-ip>:8080/admin` from a device on your home network. Signing in lasts 30 days per browser. Changing the password signs every browser out.
+
 ## Day to day
 
 - **Ship a change**: push or merge to `main`; it's live within 15 minutes.
@@ -115,6 +127,8 @@ Select the task and click **Run** once to check it. `logs/update.log` stays empt
 - **Secrets file**: readable only by root. The update script refuses to run if it's group or world readable. DSM administrators can still read it with `sudo`, so keep the admin account list short and use 2FA on DSM.
 - **Container**: runs as a non-root user (UID 1000) with a read-only filesystem, no Linux capabilities and `no-new-privileges`. It can write only to `/data` and `/tmp`.
 - **Network**: the bot polls Telegram over outbound HTTPS, so there are no inbound ports from the internet.
+- **Admin page**: plain HTTP on your LAN, password-protected with a signed `SameSite=Strict` cookie (other sites can't submit its forms). Keep port 8080 LAN-only in the firewall, as in step 6.
+- **Schema upgrades**: when a deploy changes the database structure, the app saves `data/lavie.db.pre-v<N>.bak` before migrating.
 - **Trust boundary**: whatever lands on `main` runs on your NAS within 15 minutes. Use 2FA on GitHub and consider a branch protection rule on `main` that requires a pull request. The Claude GitHub Action can open PRs, but only you merge them.
 - **If the repo becomes private**: the anonymous HTTPS clone stops working. Create a read-only **deploy key**: `sudo ssh-keygen -t ed25519 -f /root/.ssh/lavie_deploy -N ""`. Add the `.pub` contents under GitHub repo → Settings → Deploy keys. Then point the clone at SSH:
   ```sh

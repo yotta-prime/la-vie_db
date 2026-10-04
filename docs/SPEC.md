@@ -38,21 +38,23 @@ Desk job, ~9–5 on weekdays. Prompts are spread through the day:
 - **Distraction check-ins**: occasional random "What are you doing right now?" during work hours.
 - **End-of-day reflection**: rate focus 1–5 + optional note.
 
-### Learning paths
-- Tracked separately from hobbies. Each path is **professional** or **hobby**.
-- Path types (mixed):
-  - **Ordered steps** — bot serves the next step; mark done.
+### Learning paths and courses
+- Tracked separately from hobbies.
+- A **course** is what a learning session works on. It is **professional** or **hobby**, and one of:
+  - **Lessons** — ordered list; the bot serves the next lesson; finishing the last completes the course.
   - **Time-based goal** — e.g. 20 min/day; log minutes.
   - **Spaced repetition** — flashcard reviews in Telegram.
+- A **learning path** groups courses (e.g. "Cloud architect" → Networking, Security). Paths are **in order** by default (only the next unfinished course is suggested) or **any order**. Courses can also stand alone as **individual courses**.
+- Courses, lessons and routines can carry **links** (course pages, YouTube, DailyOM…), shown in the prompts.
 - **Professional / hobby split** is a configurable target ratio; the scheduler balances sessions toward it over each week.
 - Selected professional paths are explicitly **not linked** to any hobby.
 
 ### Hobbies
-- Hobby list with **elements** (sub-activities).
-- **Unlocks**: a hobby element can require a learning path to be completed first; locked elements are never suggested.
+- Hobby list with **projects** (things to do within the hobby, with optional link and notes; can be marked done).
+- **Dependencies**: a project can require a **course** or a **whole learning path** to be completed first; locked projects are never suggested, and completing the requirement announces the unlock in Telegram.
 - Selection is configured **per item** at planning time (see below), not globally.
 
-## Scheduling rules (per hobby and per learning path)
+## Scheduling rules (per hobby and per course)
 
 Set in the admin page for each item:
 
@@ -78,11 +80,11 @@ Set in the admin page for each item:
 
 ## Admin page (LAN only)
 
-CRUD for: movement routines, micro-move list, learning paths (type, category, steps/cards/goal), hobbies and elements, unlock prerequisites, per-item scheduling rules, daily timing (work hours, quiet hours, prompt times), pro/hobby ratio, CSV export. No public exposure; basic login still recommended.
+At `/admin`, protected by `ADMIN_PASSWORD`. Edit: movement routines and their items (with video links), micro-moves, learning paths, courses within them and individual courses, lessons, flashcards, hobbies and projects, project dependencies (course or path), per-item scheduling rules, daily timing (work hours, quiet hours, prompt times), pro/hobby ratio. CSV export to follow. No public exposure.
 
 ## Data model (sketch)
 
-`routine`, `routine_step`, `learning_path` (category, type, rules), `path_step`, `flashcard` (+ SRS state), `hobby`, `hobby_element` (`requires_path_id`), `schedule_rule` (method, sessions/week, start/end, weight), `prompt` (sent, due, status), `log_entry` (area, item, outcome, duration, rating, note), `settings`.
+`routine` (+ url, notes), `routine_step` (+ url), `micro_move`, `learning_path` (category, sequential), `course` (path, position, category, kind, goal, url, completed), `course_step` (url, done), `flashcard` (+ SRS state), `hobby`, `hobby_project` (url, notes, `requires_course_id` / `requires_path_id`, done), `schedule_rule` (course or hobby; method, sessions/week, weekdays, start/end, weight), `prompt` (sent, due, status), `log_entry` (area, item, outcome, duration, rating, note), `setting`, `schema_version`.
 
 ## v1 scope
 

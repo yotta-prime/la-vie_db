@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import url_link %}
+
+{% macro course_row(c) %}
+<li class="row">
+  <a class="grow {{ 'done' if c.completed_at }}" href="/admin/courses/{{ c.id }}">{{ c.name }}</a>
+  <span class="chip">{{ c.category.value }}</span>
+  <span class="chip">{{ {"steps": "lessons", "time": "time goal", "srs": "flashcards"}[c.kind.value] }}</span>
+  {% if c.kind.value == "steps" and c.steps %}
+    <span class="chip">{{ c.steps|selectattr("done_at")|list|length }}/{{ c.steps|length }}</span>
+  {% endif %}
+  {% if c.completed_at %}<span class="chip">complete</span>{% elif not c.active %}<span class="chip">inactive</span>{% endif %}
+  {{ url_link(c.url, "open") }}
+</li>
+{% endmacro %}
+
+{% block content %}
+<h1>Learning</h1>
+
+{% for p in paths %}
+<section>
+  <div class="row">
+    <h2 class="grow" style="margin:0"><a href="/admin/paths/{{ p.id }}">{{ p.name }}</a></h2>
+    <span class="chip">{{ p.category.value }}</span>
+    <span class="chip">{{ "in order" if p.sequential else "any order" }}</span>
+    {% if p.completed %}<span class="chip">complete</span>{% elif not p.active %}<span class="chip">inactive</span>{% endif %}
+  </div>
+  {% if p.description %}<p class="muted">{{ p.description }}</p>{% endif %}
+  <ul class="list" style="margin-top:8px">
+    {% for c in p.courses %}{{ course_row(c) }}{% else %}<li class="muted">No courses yet.</li>{% endfor %}
+  </ul>
+  <form method="post" action="/admin/courses" class="row" style="margin-top:10px">
+    <input type="hidden" name="path_id" value="{{ p.id }}">
+    <input class="grow" type="text" name="name" placeholder="Add a course to this path" required>
+    <select name="kind" style="width:auto">
+      <option value="steps">Lessons</option><option value="time">Time goal</option><option value="srs">Flashcards</option>
+    </select>
+    <button>Add course</button>
+  </form>
+</section>
+{% endfor %}
+
+<section>
+  <h2>Individual courses</h2>
+  <ul class="list">
+    {% for c in standalone %}{{ course_row(c) }}{% else %}<li class="muted">None yet.</li>{% endfor %}
+  </ul>
+  <form method="post" action="/admin/courses" class="row" style="margin-top:10px">
+    <input class="grow" type="text" name="name" placeholder="New individual course" required>
+    <select name="category" style="width:auto">
+      <option value="professional">Professional</option><option value="hobby">Hobby</option>
+    </select>
+    <select name="kind" style="width:auto">
+      <option value="steps">Lessons</option><option value="time">Time goal</option><option value="srs">Flashcards</option>
+    </select>
+    <button class="primary">Add course</button>
+  </form>
+</section>
+
+<section>
+  <h2>New learning path</h2>
+  <p class="muted">A path groups courses, e.g. "Cloud architect" → Networking, Security, Kubernetes.</p>
+  <form method="post" action="/admin/paths" class="row">
+    <input class="grow" type="text" name="name" placeholder="Path name" required>
+    <select name="category" style="width:auto">
+      <option value="professional">Professional</option><option value="hobby">Hobby</option>
+    </select>
+    <button class="primary">Add path</button>
+  </form>
+</section>
+{% endblock %}

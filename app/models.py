@@ -1,4 +1,13 @@
-"""Database tables. See docs/SPEC.md for the domain."""
+"""Database tables. See docs/SPEC.md for the domain.
+
+Learning is organised as:
+    LearningPath (optional container, e.g. "Cloud architect")
+      └─ Course (the unit you study in a session; can also stand alone)
+           ├─ CourseStep (lessons/chapters, for "steps" courses)
+           └─ Flashcard (for "srs" courses)
+
+Hobbies have HobbyProjects, which can require a course or a whole path to be completed first.
+"""
 
 import enum
 from datetime import date, datetime, timezone
@@ -55,13 +64,13 @@ class Area(str, enum.Enum):
     HOBBY = "hobby"
 
 
-class PathCategory(str, enum.Enum):
+class Category(str, enum.Enum):
     PROFESSIONAL = "professional"
     HOBBY = "hobby"
 
 
-class PathKind(str, enum.Enum):
-    STEPS = "steps"  # ordered step list
+class CourseKind(str, enum.Enum):
+    STEPS = "steps"  # ordered lessons
     TIME = "time"  # time-based goal
     SRS = "srs"  # spaced-repetition flashcards
 
@@ -76,7 +85,7 @@ class PromptStatus(str, enum.Enum):
     SCHEDULED = "scheduled"
     SENT = "sent"
     ANSWERED = "answered"
-    SKIPPED = "skipped"  # dropped by pause or quiet hours
+    SKIPPED = "skipped"  # dropped by pause, quiet hours, or nothing to suggest
     EXPIRED = "expired"
 
 
@@ -107,6 +116,8 @@ class Routine(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
     duration_min: Mapped[int | None]
+    url: Mapped[str | None] = mapped_column(String(500))  # e.g. a full-class video
+    notes: Mapped[str | None] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(default=True)
 
     steps: Mapped[list["RoutineStep"]] = relationship(
@@ -115,12 +126,15 @@ class Routine(Base):
 
 
 class RoutineStep(Base):
+    """One item in a routine: an exercise, or a video/link (YouTube, DailyOM...)."""
+
     __tablename__ = "routine_step"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     routine_id: Mapped[int] = mapped_column(ForeignKey("routine.id", ondelete="CASCADE"))
     position: Mapped[int]
     text: Mapped[str] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(String(500))
     duration_sec: Mapped[int | None]
 
     routine: Mapped[Routine] = relationship(back_populates="steps")
@@ -136,53 +150,80 @@ class MicroMove(Base):
     active: Mapped[bool] = mapped_column(default=True)
 
 
-# --- Learning paths -----------------------------------------------------------
+# --- Learning -----------------------------------------------------------------
 
 
 class LearningPath(Base):
+    """A group of courses. Sequential paths offer only their first unfinished course."""
+
     __tablename__ = "learning_path"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
-    category: Mapped[PathCategory] = mapped_column(_enum(PathCategory))
-    kind: Mapped[PathKind] = mapped_column(_enum(PathKind))
-    daily_goal_min: Mapped[int | None]  # for TIME paths
+    category: Mapped[Category] = mapped_column(_enum(Category))
+    description: Mapped[str | None] = mapped_column(Text)
+    sequential: Mapped[bool] = mapped_column(default=True)
+    active: Mapped[bool] = mapped_column(default=True)
+
+    courses: Mapped[list["Course"]] = relationship(
+        back_populates="path", order_by="Course.position"
+    )
+
+    @property
+    def completed(self) -> bool:
+        return bool(self.courses) and all(c.completed_at for c in self.courses)
+
+
+class Course(Base):
+    __tablename__ = "course"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    path_id: Mapped[int | None] = mapped_column(ForeignKey("learning_path.id", ondelete="SET NULL"))
+    position: Mapped[int] = mapped_column(default=0)  # order within the path
+    name: Mapped[str] = mapped_column(String(160))
+    category: Mapped[Category] = mapped_column(_enum(Category))
+    kind: Mapped[CourseKind] = mapped_column(_enum(CourseKind), default=CourseKind.STEPS)
+    daily_goal_min: Mapped[int | None]  # for TIME courses
+    url: Mapped[str | None] = mapped_column(String(500))
+    notes: Mapped[str | None] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(default=True)
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
-    steps: Mapped[list["PathStep"]] = relationship(
-        back_populates="path", order_by="PathStep.position", cascade="all, delete-orphan"
+    path: Mapped[LearningPath | None] = relationship(back_populates="courses")
+    steps: Mapped[list["CourseStep"]] = relationship(
+        back_populates="course", order_by="CourseStep.position", cascade="all, delete-orphan"
     )
     flashcards: Mapped[list["Flashcard"]] = relationship(
-        back_populates="path", cascade="all, delete-orphan"
+        back_populates="course", cascade="all, delete-orphan"
     )
 
 
-class PathStep(Base):
-    __tablename__ = "path_step"
+class CourseStep(Base):
+    __tablename__ = "course_step"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    path_id: Mapped[int] = mapped_column(ForeignKey("learning_path.id", ondelete="CASCADE"))
+    course_id: Mapped[int] = mapped_column(ForeignKey("course.id", ondelete="CASCADE"))
     position: Mapped[int]
     title: Mapped[str] = mapped_column(String(200))
     detail: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(String(500))
     done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
-    path: Mapped[LearningPath] = relationship(back_populates="steps")
+    course: Mapped[Course] = relationship(back_populates="steps")
 
 
 class Flashcard(Base):
     __tablename__ = "flashcard"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    path_id: Mapped[int] = mapped_column(ForeignKey("learning_path.id", ondelete="CASCADE"))
+    course_id: Mapped[int] = mapped_column(ForeignKey("course.id", ondelete="CASCADE"))
     front: Mapped[str] = mapped_column(Text)
     back: Mapped[str] = mapped_column(Text)
     # Serialized FSRS card state; `due` is duplicated as a column for querying.
     fsrs_state: Mapped[dict | None] = mapped_column(JSON)
     due: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
 
-    path: Mapped[LearningPath] = relationship(back_populates="flashcards")
+    course: Mapped[Course] = relationship(back_populates="flashcards")
 
 
 # --- Hobbies ------------------------------------------------------------------
@@ -195,49 +236,55 @@ class Hobby(Base):
     name: Mapped[str] = mapped_column(String(120))
     active: Mapped[bool] = mapped_column(default=True)
 
-    elements: Mapped[list["HobbyElement"]] = relationship(
-        back_populates="hobby", cascade="all, delete-orphan"
+    projects: Mapped[list["HobbyProject"]] = relationship(
+        back_populates="hobby", order_by="HobbyProject.id", cascade="all, delete-orphan"
     )
 
 
-class HobbyElement(Base):
-    """A sub-activity of a hobby, optionally locked until a learning path is completed."""
+class HobbyProject(Base):
+    """Something to do within a hobby, optionally locked until a course or path is completed."""
 
-    __tablename__ = "hobby_element"
+    __tablename__ = "hobby_project"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     hobby_id: Mapped[int] = mapped_column(ForeignKey("hobby.id", ondelete="CASCADE"))
-    name: Mapped[str] = mapped_column(String(120))
+    name: Mapped[str] = mapped_column(String(160))
+    url: Mapped[str | None] = mapped_column(String(500))
+    notes: Mapped[str | None] = mapped_column(Text)
+    requires_course_id: Mapped[int | None] = mapped_column(ForeignKey("course.id", ondelete="SET NULL"))
     requires_path_id: Mapped[int | None] = mapped_column(
         ForeignKey("learning_path.id", ondelete="SET NULL")
     )
+    active: Mapped[bool] = mapped_column(default=True)
+    done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
-    hobby: Mapped[Hobby] = relationship(back_populates="elements")
+    hobby: Mapped[Hobby] = relationship(back_populates="projects")
+    requires_course: Mapped[Course | None] = relationship()
     requires_path: Mapped[LearningPath | None] = relationship()
 
     @property
     def unlocked(self) -> bool:
-        return self.requires_path is None or self.requires_path.completed_at is not None
+        if self.requires_course is not None and self.requires_course.completed_at is None:
+            return False
+        if self.requires_path is not None and not self.requires_path.completed:
+            return False
+        return True
 
 
 # --- Scheduling ---------------------------------------------------------------
 
 
 class ScheduleRule(Base):
-    """Per-item selection rules for a hobby or a learning path (exactly one of the two)."""
+    """Per-item selection rules for a hobby or a course (exactly one of the two)."""
 
     __tablename__ = "schedule_rule"
     __table_args__ = (
-        CheckConstraint(
-            "(hobby_id IS NULL) != (path_id IS NULL)", name="rule_targets_one_item"
-        ),
+        CheckConstraint("(hobby_id IS NULL) != (course_id IS NULL)", name="rule_targets_one_item"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     hobby_id: Mapped[int | None] = mapped_column(ForeignKey("hobby.id", ondelete="CASCADE"))
-    path_id: Mapped[int | None] = mapped_column(
-        ForeignKey("learning_path.id", ondelete="CASCADE")
-    )
+    course_id: Mapped[int | None] = mapped_column(ForeignKey("course.id", ondelete="CASCADE"))
     method: Mapped[PickMethod] = mapped_column(_enum(PickMethod), default=PickMethod.ROUND_ROBIN)
     sessions_per_week: Mapped[int | None]
     weekdays: Mapped[list[int] | None] = mapped_column(JSON)  # 0=Mon, for WEEKDAY_SLOTS
@@ -286,11 +333,11 @@ class LogEntry(Base):
     # What was done (all optional; ad-hoc logs may only have `label`).
     label: Mapped[str | None] = mapped_column(String(200))
     routine_id: Mapped[int | None] = mapped_column(ForeignKey("routine.id", ondelete="SET NULL"))
-    path_id: Mapped[int | None] = mapped_column(ForeignKey("learning_path.id", ondelete="SET NULL"))
-    path_step_id: Mapped[int | None] = mapped_column(ForeignKey("path_step.id", ondelete="SET NULL"))
+    course_id: Mapped[int | None] = mapped_column(ForeignKey("course.id", ondelete="SET NULL"))
+    course_step_id: Mapped[int | None] = mapped_column(ForeignKey("course_step.id", ondelete="SET NULL"))
     hobby_id: Mapped[int | None] = mapped_column(ForeignKey("hobby.id", ondelete="SET NULL"))
-    hobby_element_id: Mapped[int | None] = mapped_column(
-        ForeignKey("hobby_element.id", ondelete="SET NULL")
+    hobby_project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("hobby_project.id", ondelete="SET NULL")
     )
 
     outcome: Mapped[Outcome | None] = mapped_column(_enum(Outcome))

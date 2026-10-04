@@ -1,6 +1,10 @@
-"""Choosing what to suggest: routines, micro-moves, learning paths, hobbies.
+"""Choosing what to suggest: routines, micro-moves, courses, hobbies.
 
-Hobbies and learning paths are ranked by a score built from their schedule rule
+Courses eligible for a learning session: active and unfinished, and either standalone,
+in a non-sequential path, or the first unfinished course of a sequential path.
+Inactive paths hide all their courses.
+
+Hobbies and courses are ranked by a score built from their schedule rule
 (spec: "Scheduling rules"). Without a rule an item behaves as round-robin, weight 1.
 
 - round_robin: score = days since last done (ties broken by weight)
@@ -22,14 +26,14 @@ from sqlalchemy.orm import Session
 
 from app.models import (
     Area,
+    Category,
+    Course,
+    CourseStep,
     Hobby,
-    HobbyElement,
-    LearningPath,
+    HobbyProject,
     LogEntry,
     MicroMove,
     Outcome,
-    PathCategory,
-    PathStep,
     PickMethod,
     Routine,
     ScheduleRule,
@@ -121,42 +125,57 @@ def _rank(items, column, rule_attr: str, s: Session, today: date, tz: ZoneInfo):
     return [item for _, item in scored]
 
 
-# --- learning paths -----------------------------------------------------------
+# --- learning -----------------------------------------------------------------
 
 
-def rank_learning(s: Session, today: date, tz: ZoneInfo, ratio: dict) -> list[LearningPath]:
-    """Ranked paths for today's learning session.
+def eligible_courses(s: Session) -> list[Course]:
+    courses = s.scalars(
+        select(Course).where(Course.active, Course.completed_at.is_(None)).order_by(Course.position, Course.id)
+    ).all()
+    out = []
+    for c in courses:
+        p = c.path
+        if p is None:
+            out.append(c)
+        elif not p.active:
+            continue
+        elif not p.sequential:
+            out.append(c)
+        else:
+            first = next((x for x in p.courses if x.active and x.completed_at is None), None)
+            if first is c:
+                out.append(c)
+    return out
+
+
+def rank_learning(s: Session, today: date, tz: ZoneInfo, ratio: dict) -> list[Course]:
+    """Ranked courses for today's learning session.
 
     The category (professional/hobby) furthest behind its weekly target share goes first;
-    the other category follows as a fallback for the "Another" button.
+    the other category follows as a fallback for the "Something else" button.
     """
-    paths = list(
-        s.scalars(
-            select(LearningPath).where(LearningPath.active, LearningPath.completed_at.is_(None))
-        )
-    )
-    ranked = _rank(paths, LogEntry.path_id, "path_id", s, today, tz)
+    ranked = _rank(eligible_courses(s), LogEntry.course_id, "course_id", s, today, tz)
 
     since = local_dt(week_start(today), "00:00", tz)
     counts = dict(
         s.execute(
-            select(LearningPath.category, func.count())
-            .join(LogEntry, LogEntry.path_id == LearningPath.id)
+            select(Course.category, func.count())
+            .join(LogEntry, LogEntry.course_id == Course.id)
             .where(LogEntry.outcome.in_(DONE), LogEntry.created_at >= since)
-            .group_by(LearningPath.category)
+            .group_by(Course.category)
         ).all()
     )
     total = sum(counts.values()) + 1
 
-    def deficit(cat: PathCategory) -> float:
+    def deficit(cat: Category) -> float:
         return ratio.get(cat.value, 0) * total - counts.get(cat, 0)
 
-    first = max(PathCategory, key=deficit)
-    return [p for p in ranked if p.category == first] + [p for p in ranked if p.category != first]
+    first = max(Category, key=deficit)
+    return [c for c in ranked if c.category == first] + [c for c in ranked if c.category != first]
 
 
-def next_step(path: LearningPath) -> PathStep | None:
-    return next((st for st in path.steps if st.done_at is None), None)
+def next_step(course: Course) -> CourseStep | None:
+    return next((st for st in course.steps if st.done_at is None), None)
 
 
 # --- hobbies ------------------------------------------------------------------
@@ -167,19 +186,19 @@ def rank_hobbies(s: Session, today: date, tz: ZoneInfo) -> list[Hobby]:
     return _rank(hobbies, LogEntry.hobby_id, "hobby_id", s, today, tz)
 
 
-def pick_element(s: Session, hobby: Hobby) -> HobbyElement | None:
-    """The unlocked element done least recently (never-done first), or None if it has none."""
-    unlocked = [e for e in hobby.elements if e.unlocked]
-    if not unlocked:
+def pick_project(s: Session, hobby: Hobby) -> HobbyProject | None:
+    """The open, unlocked project worked on least recently (never-touched first)."""
+    open_ = [p for p in hobby.projects if p.active and p.done_at is None and p.unlocked]
+    if not open_:
         return None
     last = dict(
         s.execute(
-            select(LogEntry.hobby_element_id, func.max(LogEntry.created_at))
-            .where(LogEntry.hobby_element_id.in_([e.id for e in unlocked]), LogEntry.outcome.in_(DONE))
-            .group_by(LogEntry.hobby_element_id)
+            select(LogEntry.hobby_project_id, func.max(LogEntry.created_at))
+            .where(LogEntry.hobby_project_id.in_([p.id for p in open_]), LogEntry.outcome.in_(DONE))
+            .group_by(LogEntry.hobby_project_id)
         ).all()
     )
-    return min(unlocked, key=lambda e: (last.get(e.id, NEVER), e.id))
+    return min(open_, key=lambda p: (last.get(p.id, NEVER), p.id))
 
 
 # --- movement -----------------------------------------------------------------

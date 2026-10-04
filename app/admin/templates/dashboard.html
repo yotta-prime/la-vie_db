@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Today · {{ today.strftime("%A %d %B") }}</h1>
+
+<section>
+  <h2>Prompts</h2>
+  {% if prompts %}
+  <table>
+    {% for t, kind, status in prompts %}
+    <tr><td style="width:70px">{{ t }}</td><td>{{ kind }}</td><td><span class="chip">{{ status }}</span></td></tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="muted">Nothing planned today yet.</p>
+  {% endif %}
+  <form method="post" action="/admin/replan" class="actions">
+    <button>Re-plan the rest of today</button>
+    <span class="muted">Applies current settings to prompts not sent yet.</span>
+  </form>
+</section>
+
+<section>
+  <h2>Content</h2>
+  <div class="grid">
+    <a class="btn" href="/admin/movement">{{ counts.routines }} routine{{ 's' if counts.routines != 1 }}</a>
+    <a class="btn" href="/admin/learning">{{ counts.paths }} path{{ 's' if counts.paths != 1 }} · {{ counts.courses }} course{{ 's' if counts.courses != 1 }}</a>
+    <a class="btn" href="/admin/hobbies">{{ counts.hobbies }} hobb{{ 'ies' if counts.hobbies != 1 else 'y' }}</a>
+  </div>
+</section>
+{% endblock %}

@@ -14,21 +14,21 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app import selection as sel
 from app.db import Database
 from app.defaults import DEFAULT_SETTINGS
 from app.models import (
     Area,
+    Course,
+    CourseKind,
+    CourseStep,
     Hobby,
-    HobbyElement,
-    LearningPath,
+    HobbyProject,
     LogEntry,
     MicroMove,
     Outcome,
-    PathKind,
-    PathStep,
     Pause,
     Prompt,
     PromptStatus,
@@ -70,6 +70,10 @@ class ActionResult:
     extra: list[str] = field(default_factory=list)  # follow-up messages
 
 
+def link(url: str | None, label: str = "link") -> str:
+    return f' · <a href="{html.escape(url, quote=True)}">{html.escape(label)}</a>' if url else ""
+
+
 def outcome_buttons(prompt_id: int, partial: bool = True, another: bool = False) -> list[list[Button]]:
     row = [Button("Done", f"p:{prompt_id}:done")]
     if partial:
@@ -100,19 +104,26 @@ class Engine:
 
     # --- planning -------------------------------------------------------------
 
-    def plan_day(self, day: date) -> int:
-        """Create the day's prompts unless already planned. Returns how many were created."""
+    def plan_day(self, day: date, replan_after: datetime | None = None) -> int:
+        """Create the day's prompts unless already planned. Returns how many were created.
+
+        With replan_after, still-scheduled prompts after that time are replaced using the
+        current settings (used after editing settings in the admin page).
+        """
         start, end = local_day_bounds(day, self.tz)
         with self.db.session() as s:
-            already = s.scalar(
-                select(Prompt.id).where(
-                    Prompt.scheduled_for >= start,
-                    Prompt.scheduled_for < end,
-                    Prompt.kind != "focus_end",
-                )
+            day_prompts = select(Prompt).where(
+                Prompt.scheduled_for >= start, Prompt.scheduled_for < end, Prompt.kind != "focus_end"
             )
-            if already:
+            if replan_after is not None:
+                for p in s.scalars(day_prompts.where(Prompt.status == PromptStatus.SCHEDULED)):
+                    s.delete(p)
+                # Kinds already handled earlier today shouldn't come round again.
+                done_kinds = {p.kind for p in s.scalars(day_prompts) if p.kind not in ("micro_move", "distraction")}
+            elif s.scalar(day_prompts.limit(1)):
                 return 0
+            else:
+                done_kinds = set()
 
             cfg = self.settings(s)
             times = cfg["prompt_times"]
@@ -133,6 +144,8 @@ class Engine:
             created = 0
             for area, kind, when in sorted(planned, key=lambda x: x[2]):
                 if in_quiet_hours(when, cfg["quiet_hours"], self.tz):
+                    continue
+                if replan_after is not None and (when <= replan_after or kind in done_kinds):
                     continue
                 s.add(Prompt(area=area, kind=kind, scheduled_for=when))
                 created += 1
@@ -279,36 +292,44 @@ class Engine:
         head = f"<b>Movement: {html.escape(r.name)}</b>"
         if r.duration_min:
             head += f" ({r.duration_min} min)"
-        steps = "\n".join(f"{i}. {html.escape(st.text)}" for i, st in enumerate(r.steps, 1))
-        return f"{head}\n{steps}" if steps else head
+        head += link(r.url, "open")
+        lines = [head]
+        if r.notes:
+            lines.append(f"<i>{html.escape(r.notes)}</i>")
+        lines += [f"{i}. {html.escape(st.text)}{link(st.url)}" for i, st in enumerate(r.steps, 1)]
+        return "\n".join(lines)
 
     def _session_text(self, s, kind: str, payload: dict) -> str:
-        """Render the current candidate; also records the chosen element/step in payload."""
+        """Render the current candidate; also records the chosen project/step in payload."""
         item_id = payload["candidates"][payload["idx"]]
         if kind == "learning":
-            path = s.get(LearningPath, item_id)
-            head = f"<b>Learning ({path.category.value}): {html.escape(path.name)}</b>"
+            course = s.get(Course, item_id)
+            head = f"<b>Learning ({course.category.value}): {html.escape(course.name)}</b>{link(course.url, 'open')}"
+            if course.path:
+                head += f"\n<i>Path: {html.escape(course.path.name)}</i>"
             payload.pop("step_id", None)
-            if path.kind == PathKind.STEPS:
-                step = sel.next_step(path)
+            if course.kind == CourseKind.STEPS:
+                step = sel.next_step(course)
                 if step is None:
-                    return f"{head}\nAll steps done; mark the path complete in the admin page."
+                    return f"{head}\nNo lessons left; add more or mark the course complete in the admin page."
                 payload["step_id"] = step.id
-                body = f"Next: {html.escape(step.title)}"
+                body = f"Next: {html.escape(step.title)}{link(step.url)}"
                 if step.detail:
                     body += f"\n{html.escape(step.detail)}"
-            elif path.kind == PathKind.TIME:
-                body = f"Goal: {path.daily_goal_min or 20} min today"
+            elif course.kind == CourseKind.TIME:
+                body = f"Goal: {course.daily_goal_min or 20} min today"
             else:
                 body = "Flashcard review (Telegram reviews arrive in a later version)."
             return f"{head}\n{body}"
 
         hobby = s.get(Hobby, item_id)
-        element = sel.pick_element(s, hobby)
-        payload["element_id"] = element.id if element else None
+        project = sel.pick_project(s, hobby)
+        payload["project_id"] = project.id if project else None
         text = f"<b>Hobby time: {html.escape(hobby.name)}</b>"
-        if element:
-            text += f"\nSuggestion: {html.escape(element.name)}"
+        if project:
+            text += f"\nProject: {html.escape(project.name)}{link(project.url)}"
+            if project.notes:
+                text += f"\n<i>{html.escape(project.notes)}</i>"
         return text
 
     def _todays_intention(self, s, today: date) -> str | None:
@@ -381,30 +402,51 @@ class Engine:
             e.label = "focus block"
             e.duration_min = payload["minutes"] if outcome != Outcome.SKIP else None
         elif p.kind == "learning":
-            e.path_id = payload["candidates"][payload["idx"]]
-            e.path_step_id = payload.get("step_id")
-            path = s.get(LearningPath, e.path_id)
-            if path.kind == PathKind.TIME and outcome == Outcome.DONE:
-                e.duration_min = path.daily_goal_min
+            e.course_id = payload["candidates"][payload["idx"]]
+            e.course_step_id = payload.get("step_id")
+            course = s.get(Course, e.course_id)
+            if course.kind == CourseKind.TIME and outcome == Outcome.DONE:
+                e.duration_min = course.daily_goal_min
         elif p.kind == "hobby":
             e.hobby_id = payload["candidates"][payload["idx"]]
-            e.hobby_element_id = payload.get("element_id")
+            e.hobby_project_id = payload.get("project_id")
         return e
 
     def _complete_step(self, s, step_id: int, now: datetime) -> list[str]:
-        """Mark a step done; if it was the path's last, complete the path and announce unlocks."""
-        step = s.get(PathStep, step_id)
+        """Mark a lesson done; if it was the course's last, complete the course."""
+        step = s.get(CourseStep, step_id)
         if step is None or step.done_at:
             return []
         step.done_at = now
-        path = step.path
-        if any(st.done_at is None for st in path.steps):
+        if any(st.done_at is None for st in step.course.steps):
             return []
-        path.completed_at = now
-        msgs = [f"Path complete: <b>{html.escape(path.name)}</b>"]
-        for el in s.scalars(select(HobbyElement).where(HobbyElement.requires_path_id == path.id)):
-            msgs.append(f"Unlocked: {html.escape(el.hobby.name)} · {html.escape(el.name)}")
-        return ["\n".join(msgs)]
+        return complete_course(s, step.course, now)
+
+    def _match_item(self, s, label: str, area: Area | None, entry: LogEntry) -> bool:
+        """Link the log to a known hobby, course or routine by name."""
+        if not label:
+            return False
+        needle = label.lower()
+
+        def hit(name: str) -> bool:
+            return name.lower() in needle or needle in name.lower()
+
+        if area in (None, Area.HOBBY):
+            for h in s.scalars(select(Hobby)):
+                if hit(h.name):
+                    entry.area, entry.hobby_id = Area.HOBBY, h.id
+                    return True
+        if area in (None, Area.LEARNING):
+            for c in s.scalars(select(Course)):
+                if hit(c.name):
+                    entry.area, entry.course_id = Area.LEARNING, c.id
+                    return True
+        if area in (None, Area.MOVEMENT):
+            for r in s.scalars(select(Routine)):
+                if hit(r.name):
+                    entry.area, entry.routine_id = Area.MOVEMENT, r.id
+                    return True
+        return False
 
     # --- text replies ---------------------------------------------------------
 
@@ -565,28 +607,22 @@ class Engine:
                            duration_min=minutes, created_at=now))
         return f"Logged {area_value}: {label}" + (f", {minutes} min" if minutes else "") + "."
 
-    def _match_item(self, s, label: str, area: Area | None, entry: LogEntry) -> bool:
-        """Link the log to a known hobby, learning path or routine by name."""
-        if not label:
-            return False
-        needle = label.lower()
 
-        def hit(name: str) -> bool:
-            return name.lower() in needle or needle in name.lower()
+def complete_course(s, course: Course, now: datetime) -> list[str]:
+    """Mark a course complete and describe what that finishes or unlocks (paths, projects)."""
+    if course.completed_at:
+        return []
+    course.completed_at = now
+    s.flush()
+    lines = [f"Course complete: <b>{html.escape(course.name)}</b>"]
+    path = course.path
+    if path is not None and path.completed:
+        lines.append(f"Path complete: <b>{html.escape(path.name)}</b>")
 
-        if area in (None, Area.HOBBY):
-            for h in s.scalars(select(Hobby)):
-                if hit(h.name):
-                    entry.area, entry.hobby_id = Area.HOBBY, h.id
-                    return True
-        if area in (None, Area.LEARNING):
-            for p in s.scalars(select(LearningPath)):
-                if hit(p.name):
-                    entry.area, entry.path_id = Area.LEARNING, p.id
-                    return True
-        if area in (None, Area.MOVEMENT):
-            for r in s.scalars(select(Routine)):
-                if hit(r.name):
-                    entry.area, entry.routine_id = Area.MOVEMENT, r.id
-                    return True
-        return False
+    conds = [HobbyProject.requires_course_id == course.id]
+    if path is not None:
+        conds.append(HobbyProject.requires_path_id == path.id)
+    for proj in s.scalars(select(HobbyProject).where(or_(*conds))):
+        if proj.unlocked:
+            lines.append(f"Unlocked: {html.escape(proj.hobby.name)} · {html.escape(proj.name)}")
+    return ["\n".join(lines)]

@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # and it will reply with your chat ID to put here.
     telegram_owner_chat_id: int | None = None
 
+    # Password for the admin page. The admin page stays locked until this is set.
+    admin_password: str = ""
+
     timezone: str = "Europe/London"
     data_dir: Path = Path("data")
     backup_keep: int = 14

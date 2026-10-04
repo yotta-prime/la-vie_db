@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI
 
+from app import admin
 from app.bot import Bot
 from app.config import get_settings
 from app.db import Database
@@ -43,7 +44,7 @@ async def lifespan(app: FastAPI):
 
     await bot.start()
 
-    app.state.db, app.state.bot, app.state.scheduler = db, bot, scheduler
+    app.state.db, app.state.engine, app.state.bot, app.state.scheduler = db, engine, bot, scheduler
     try:
         yield
     finally:
@@ -52,7 +53,8 @@ async def lifespan(app: FastAPI):
         db.engine.dispose()
 
 
-app = FastAPI(title="la-vie", lifespan=lifespan)
+app = FastAPI(title="la-vie", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+admin.install(app)
 
 
 @app.get("/health")

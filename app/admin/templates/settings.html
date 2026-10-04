@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Settings</h1>
+<form method="post" action="/admin/settings">
+  <section>
+    <h2>Prompt times</h2>
+    <div class="grid">
+      {% for key, label in time_fields.items() %}
+      <div><label>{{ label }}</label><input type="time" name="{{ key }}" value="{{ cfg.prompt_times[key] }}" required></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <h2>Work and quiet hours</h2>
+    <label>Work days (focus prompts and desk breaks)</label>
+    <div class="row" style="margin-bottom:10px">
+      {% for d in WEEKDAYS %}
+      <label class="check"><input type="checkbox" name="work_days" value="{{ loop.index0 }}" {{ 'checked' if loop.index0 in cfg.work_days }}> {{ d }}</label>
+      {% endfor %}
+    </div>
+    <div class="grid">
+      <div><label>Work starts</label><input type="time" name="work_start" value="{{ cfg.work_hours.start }}" required></div>
+      <div><label>Work ends</label><input type="time" name="work_end" value="{{ cfg.work_hours.end }}" required></div>
+      <div><label>Quiet from</label><input type="time" name="quiet_start" value="{{ cfg.quiet_hours.start }}" required></div>
+      <div><label>Quiet until</label><input type="time" name="quiet_end" value="{{ cfg.quiet_hours.end }}" required></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Rhythm</h2>
+    <div class="grid">
+      <div><label>Desk break every (min)</label><input type="number" name="micro_move_interval_min" min="15" value="{{ cfg.micro_move_interval_min }}"></div>
+      <div><label>Distraction checks per day</label><input type="number" name="distraction_checks_per_day" min="0" max="6" value="{{ cfg.distraction_checks_per_day }}"></div>
+      <div><label>Default focus block (min)</label><input type="number" name="focus_block_default_min" min="5" max="240" value="{{ cfg.focus_block_default_min }}"></div>
+      <div><label>Professional share of learning (%)</label><input type="number" name="professional_pct" min="0" max="100" value="{{ (cfg.learning_ratio.professional * 100)|round|int }}"></div>
+      <div><label>Nightly backup at</label><input type="time" name="backup_time" value="{{ cfg.backup_time }}" required></div>
+    </div>
+    <p class="muted">The backup time takes effect after the next restart or deploy.</p>
+  </section>
+
+  <div class="actions">
+    <label class="check"><input type="checkbox" name="replan" checked> Apply to the rest of today</label>
+    <button class="primary">Save settings</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import url_link %}
+{% block content %}
+<h1>Movement</h1>
+
+<section>
+  <h2>Routines</h2>
+  <p class="muted">The morning prompt rotates through active routines. Items can be exercises or links to videos (YouTube, DailyOM…).</p>
+  <ul class="list">
+    {% for r in routines %}
+    <li class="row">
+      <a class="grow" href="/admin/routines/{{ r.id }}">{{ r.name }}</a>
+      {% if r.duration_min %}<span class="chip">{{ r.duration_min }} min</span>{% endif %}
+      <span class="chip">{{ r.steps|length }} item{{ 's' if r.steps|length != 1 }}</span>
+      {% if not r.active %}<span class="chip">inactive</span>{% endif %}
+      {{ url_link(r.url, "video") }}
+    </li>
+    {% else %}
+    <li class="muted">No routines yet.</li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/admin/routines" class="row" style="margin-top:12px">
+    <input class="grow" type="text" name="name" placeholder="New routine name" required>
+    <button class="primary">Add routine</button>
+  </form>
+</section>
+
+<section id="micro">
+  <h2>Desk-break micro-moves</h2>
+  <p class="muted">One is picked at random for each desk-break prompt during work hours.</p>
+  <ul class="list">
+    {% for m in moves %}
+    <li>
+      <form method="post" action="/admin/micro-moves/{{ m.id }}" class="row">
+        <input class="grow" type="text" name="text" value="{{ m.text }}">
+        <label class="check"><input type="checkbox" name="active" {{ 'checked' if m.active }}> active</label>
+        <button class="icon">Save</button>
+        <button class="icon danger" name="action" value="delete">Delete</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/admin/micro-moves" class="row" style="margin-top:12px">
+    <input class="grow" type="text" name="text" placeholder="New micro-move" required>
+    <button class="primary">Add</button>
+  </form>
+</section>
+{% endblock %}
