@@ -1,0 +1,14 @@
+# For Synology Container Manager: Project -> Create -> point at this folder.
+services:
+  lavie:
+    build: .
+    container_name: lavie
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    ports:
+      # LAN only: don't forward this port on your router.
+      - "8080:8000"
