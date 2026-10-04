@@ -626,8 +626,11 @@ async def settings_save(request: Request):
     form = await request.form()
     eng = request.app.state.engine
     try:
-        for key in [*TIME_FIELDS, "work_start", "work_end", "quiet_start", "quiet_end", "backup_time"]:
+        for key in [*TIME_FIELDS, "work_start", "work_end", "quiet_start", "quiet_end", "backup_time", "summary_time"]:
             parse_hhmm(str(form.get(key)))
+        summary_day = num(form, "summary_weekday")
+        if summary_day is None or not 0 <= summary_day <= 6:
+            raise ValueError("weekday")
         pro = max(0, min(100, num(form, "professional_pct") or 0))
         values = {
             "prompt_times": {k: str(form.get(k)) for k in TIME_FIELDS},
@@ -639,6 +642,7 @@ async def settings_save(request: Request):
             "learning_ratio": {"professional": pro / 100, "hobby": (100 - pro) / 100},
             "focus_block_default_min": max(5, min(240, num(form, "focus_block_default_min") or 25)),
             "backup_time": str(form.get("backup_time")),
+            "weekly_summary": {"weekday": summary_day, "time": str(form.get("summary_time"))},
         }
     except (ValueError, TypeError):
         return back("/admin/settings", "Times must be HH:MM.")

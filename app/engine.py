@@ -35,6 +35,7 @@ from app.models import (
     Routine,
     Setting,
 )
+from app.reports import weekly_summary
 from app.timeutil import in_quiet_hours, local_day_bounds, local_dt, parse_duration
 
 EXPIRE_AFTER = timedelta(minutes=30)
@@ -140,6 +141,9 @@ class Engine:
                 ]
                 planned += [(Area.MOVEMENT, "micro_move", t) for t in self._micro_times(day, cfg)]
                 planned += [(Area.FOCUS, "distraction", t) for t in self._distraction_times(day, cfg)]
+            summary = cfg["weekly_summary"]
+            if day.weekday() == summary["weekday"]:
+                planned.append((Area.FOCUS, "weekly_summary", local_dt(day, summary["time"], self.tz)))
 
             created = 0
             for area, kind, when in sorted(planned, key=lambda x: x[2]):
@@ -191,8 +195,9 @@ class Engine:
                 if now - p.scheduled_for > EXPIRE_AFTER:
                     p.status = PromptStatus.EXPIRED
                     continue
-                user_started = p.kind == "focus_end"
-                if not user_started and (
+                # Focus blocks were started by you, and the summary isn't a nudge: pauses don't apply.
+                exempt = p.kind in ("focus_end", "weekly_summary")
+                if not exempt and (
                     in_quiet_hours(now, cfg["quiet_hours"], self.tz) or self._paused(s, p.area, now)
                 ):
                     p.status = PromptStatus.SKIPPED
@@ -268,6 +273,10 @@ class Engine:
         elif kind == "focus_end":
             text = f"<b>Focus block finished</b> ({payload['minutes']} min)\nHow did it go?"
             buttons = outcome_buttons(p.id)
+
+        elif kind == "weekly_summary":
+            text = weekly_summary(s, now, self.tz, self.settings(s)["learning_ratio"])
+            buttons = []
 
         elif kind in ("learning", "hobby"):
             if "candidates" not in payload:
@@ -480,6 +489,10 @@ class Engine:
             return "Noted."
 
     # --- commands -------------------------------------------------------------
+
+    def summary(self, now: datetime) -> str:
+        with self.db.session() as s:
+            return weekly_summary(s, now, self.tz, self.settings(s)["learning_ratio"])
 
     def start_focus(self, args: list[str], now: datetime) -> str:
         with self.db.session() as s:

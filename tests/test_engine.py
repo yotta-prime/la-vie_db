@@ -314,6 +314,47 @@ def test_weekday_slots_and_locked_projects(engine, db):
     assert engine.handle_action(pid, "another", at(MONDAY, "19:01")).toast == "No other suggestions today."
 
 
+# --- weekly summary -----------------------------------------------------------
+
+SUNDAY = date(2026, 10, 11)
+
+
+def test_weekly_summary_sent_on_sunday_even_when_paused(engine, db):
+    with db.session() as s:
+        k8s = Course(name="Kubernetes", category=Category.PROFESSIONAL, kind=CourseKind.TIME, daily_goal_min=30)
+        song = Course(name="Song theory", category=Category.HOBBY, kind=CourseKind.TIME)
+        guitar = Hobby(name="Guitar", projects=[HobbyProject(name="Learn riff", done_at=at(MONDAY, "20:00"))])
+        s.add_all([k8s, song, guitar])
+        s.flush()
+        for d in range(3):  # three pro sessions, one hobby session
+            s.add(LogEntry(area=Area.LEARNING, course_id=k8s.id, outcome="done", duration_min=30,
+                           created_at=at(MONDAY + timedelta(days=d), "17:40")))
+        s.add(LogEntry(area=Area.LEARNING, course_id=song.id, outcome="done", created_at=at(MONDAY, "18:00")))
+        s.add(LogEntry(area=Area.HOBBY, hobby_id=guitar.id, outcome="done", created_at=at(MONDAY, "19:30")))
+        s.add(LogEntry(area=Area.FOCUS, rating=4, created_at=at(MONDAY, "20:30")))
+        s.add(LogEntry(area=Area.FOCUS, rating=3, created_at=at(MONDAY + timedelta(days=1), "20:30")))
+        s.add(LogEntry(area=Area.MOVEMENT, label="run", outcome="done", duration_min=30, created_at=at(SATURDAY, "09:00")))
+
+    engine.pause(["all"], at(SUNDAY, "08:00"))
+    engine.plan_day(SUNDAY)
+    assert [p.kind for p in prompts(db, "weekly_summary")] == ["weekly_summary"]
+
+    out = send_due(engine, at(SUNDAY, "18:00"))
+    assert len(out) == 1
+    text = out[0][1].text
+    assert "<b>Week of 05 Oct</b>" in text and "so far" not in text
+    assert "Average focus 3.5/5 over 2 days" in text
+    assert "Kubernetes: 3 sessions, 90 min" in text and "Song theory: 1 session" in text
+    assert "Professional 75% / hobby 25% (target 85/15)" in text
+    assert "Guitar ×1" in text and "Finished project: Guitar · Learn riff" in text
+    assert "1 extra activity logged" in text and "Extra activity time: 30 min" in text
+
+
+def test_summary_command_midweek(engine, db):
+    text = engine.summary(at(MONDAY + timedelta(days=2), "12:00"))
+    assert "(so far, to Wed)" in text and "No learning sessions yet" in text
+
+
 # --- /log ---------------------------------------------------------------------
 
 

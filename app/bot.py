@@ -22,6 +22,7 @@ log = logging.getLogger(__name__)
 
 COMMANDS = [
     ("status", "Today's remaining prompts, pauses and streaks"),
+    ("summary", "This week so far"),
     ("focus", "Start a focus block: /focus 50"),
     ("log", "Log something: /log run 30m"),
     ("pause", "Pause prompts: /pause hobby 2d"),
@@ -33,6 +34,7 @@ HELP = (
     "<b>la-vie</b> sends prompts through the day. Tap the buttons to log, "
     "or reply to a question.\n\n"
     "/status: what's still to come today, pauses, streaks\n"
+    "/summary: this week so far (sent automatically on Sunday evening)\n"
     "/focus [min]: start a focus block (default 25)\n"
     "/log &lt;what&gt; [duration]: log something, e.g. <code>/log run 30m</code>\n"
     "/pause [area|all] [duration]: e.g. <code>/pause</code>, <code>/pause hobby 2d</code>\n"
@@ -86,6 +88,7 @@ class Bot:
         if self.engine is not None:
             app.add_handler(CommandHandler("help", self._help, filters=owner))
             app.add_handler(CommandHandler("status", self._status, filters=owner))
+            app.add_handler(CommandHandler("summary", self._summary, filters=owner))
             app.add_handler(CommandHandler("focus", self._focus, filters=owner))
             app.add_handler(CommandHandler("pause", self._pause, filters=owner))
             app.add_handler(CommandHandler("resume", self._resume, filters=owner))
@@ -165,6 +168,9 @@ class Bot:
 
     async def _status(self, update: Update, _ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.engine.status(now_utc()))
+
+    async def _summary(self, update: Update, _ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.engine.summary(now_utc()))
 
     async def _focus(self, update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.engine.start_focus(ctx.args, now_utc()))

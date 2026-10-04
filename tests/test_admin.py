@@ -176,6 +176,7 @@ def test_settings_save_and_replan(client):
         "work_start": "09:30", "work_end": "17:30", "quiet_start": "22:00", "quiet_end": "06:30",
         "micro_move_interval_min": "90", "distraction_checks_per_day": "1",
         "focus_block_default_min": "50", "professional_pct": "75", "backup_time": "03:30", "replan": "on",
+        "summary_weekday": "5", "summary_time": "17:00",
     }
     r = client.post("/admin/settings", data=form)
     assert "re-planned" in r.text
@@ -183,6 +184,7 @@ def test_settings_save_and_replan(client):
         assert s.get(Setting, "prompt_times").value["movement_routine"] == "07:00"
         assert s.get(Setting, "work_days").value == [0, 1, 2, 3]
         assert s.get(Setting, "learning_ratio").value == {"professional": 0.75, "hobby": 0.25}
+        assert s.get(Setting, "weekly_summary").value == {"weekday": 5, "time": "17:00"}
 
     bad = dict(form, work_start="9am")
     assert "HH:MM" in client.post("/admin/settings", data=bad).text

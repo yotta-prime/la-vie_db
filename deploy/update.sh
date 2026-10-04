@@ -50,6 +50,7 @@ fi
 
 log "deploying $(git rev-parse --short origin/main) (was $(git rev-parse --short HEAD))"
 git reset --hard --quiet origin/main
+export LAVIE_VERSION="$(git rev-parse --short HEAD)"
 compose up -d --build --remove-orphans
 docker image prune -f >/dev/null
 log "deployed"

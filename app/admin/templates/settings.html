@@ -34,6 +34,13 @@
       <div><label>Distraction checks per day</label><input type="number" name="distraction_checks_per_day" min="0" max="6" value="{{ cfg.distraction_checks_per_day }}"></div>
       <div><label>Default focus block (min)</label><input type="number" name="focus_block_default_min" min="5" max="240" value="{{ cfg.focus_block_default_min }}"></div>
       <div><label>Professional share of learning (%)</label><input type="number" name="professional_pct" min="0" max="100" value="{{ (cfg.learning_ratio.professional * 100)|round|int }}"></div>
+      <div>
+        <label>Weekly summary on</label>
+        <select name="summary_weekday">
+          {% for d in WEEKDAYS %}<option value="{{ loop.index0 }}" {{ 'selected' if loop.index0 == cfg.weekly_summary.weekday }}>{{ d }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Weekly summary at</label><input type="time" name="summary_time" value="{{ cfg.weekly_summary.time }}" required></div>
       <div><label>Nightly backup at</label><input type="time" name="backup_time" value="{{ cfg.backup_time }}" required></div>
     </div>
     <p class="muted">The backup time takes effect after the next restart or deploy.</p>

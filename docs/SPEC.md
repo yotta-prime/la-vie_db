@@ -69,6 +69,7 @@ Set in the admin page for each item:
 - `/pause [area|all] [until]` and `/resume` — pause mode.
 - `/log <activity> [duration]` — ad-hoc log, e.g. `/log run 30m`.
 - `/focus [minutes]` — start a focus block.
+- `/summary` — this week so far; `/status` — what's left today, pauses, streaks.
 - Quiet hours enforced server-side.
 - Bot only answers the owner's Telegram chat ID.
 

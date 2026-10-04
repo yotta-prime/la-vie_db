@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -61,6 +62,7 @@ admin.install(app)
 def health() -> dict:
     return {
         "status": "ok",
+        "version": os.environ.get("APP_VERSION", "dev"),
         "bot": app.state.bot.app is not None,
         "jobs": [j.id for j in app.state.scheduler.get_jobs()],
     }

@@ -2,7 +2,10 @@
 # Locally, the defaults (./.env and ./data) are used.
 services:
   lavie:
-    build: .
+    build:
+      context: .
+      args:
+        APP_VERSION: ${LAVIE_VERSION:-dev}
     image: lavie:latest
     container_name: lavie
     restart: unless-stopped
