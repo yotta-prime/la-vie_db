@@ -100,7 +100,14 @@ Select the task and click **Run** once to check it. `logs/update.log` stays empt
 sudo cat /volume1/docker/lavie/logs/last-check   # should be less than 15 minutes old
 ```
 
-If it isn't updating, check that the schedule says **Daily** with **Every 15 minutes**, not a single date or once a day, and that **Start time is 00:00 and Last run time 23:45**. DSM only repeats between those two times: a start of 14:00 with a last run of 14:45 means four runs a day. **Next run time** in the task list should always be less than 15 minutes away. The command uses full paths (`/bin/bash`, `/volume1/...`), following Synology's [Task Scheduler scripting tips](https://kb.synology.com/en-uk/DSM/tutorial/common_mistake_in_task_scheduler_script).
+If it isn't updating, check that the schedule says **Daily** with **Every 15 minutes**, not a single date or once a day, and that **Start time is 00:00 and Last run time 23:45**. DSM only repeats between those two times: a start of 14:00 with a last run of 14:45 means four runs a day. **Next run time** in the task list should always be less than 15 minutes away.
+
+If the schedule looks right but `last-check` still doesn't move, DSM's cron service may not have reloaded after the task was edited (or after a time zone change). Compare what DSM thinks with what actually ran, then restart cron:
+
+```sh
+sudo synoschedtask --get | grep -A14 'lavie update'   # schedule, next trigger, last run time
+sudo systemctl restart crond
+``` The command uses full paths (`/bin/bash`, `/volume1/...`), following Synology's [Task Scheduler scripting tips](https://kb.synology.com/en-uk/DSM/tutorial/common_mistake_in_task_scheduler_script).
 
 ### 6. Lock down
 
