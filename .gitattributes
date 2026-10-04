@@ -1,0 +1,4 @@
+# Shell scripts and Docker files must keep LF endings to run on the NAS.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf

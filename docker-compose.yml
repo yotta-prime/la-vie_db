@@ -1,14 +1,30 @@
-# For Synology Container Manager: Project -> Create -> point at this folder.
+# On the NAS, deploy/update.sh sets LAVIE_ENV_FILE and LAVIE_DATA_DIR to paths outside the repo.
+# Locally, the defaults (./.env and ./data) are used.
 services:
   lavie:
     build: .
+    image: lavie:latest
     container_name: lavie
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - ${LAVIE_ENV_FILE:-.env}
     environment:
       DATA_DIR: /data
     volumes:
-      - ./data:/data
+      - ${LAVIE_DATA_DIR:-./data}:/data
     ports:
       # LAN only: don't forward this port on your router.
       - "8080:8000"
+    # Hardening: read-only filesystem except /data and /tmp, no extra privileges.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"

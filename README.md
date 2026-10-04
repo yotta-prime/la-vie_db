@@ -22,7 +22,4 @@ Health check: http://localhost:8000/health
 
 ## Deploy on Synology
 
-1. Copy this folder (with your `.env`) to the NAS, e.g. `/volume1/docker/lavie`.
-2. Container Manager → **Project** → **Create** → choose that folder; it uses `docker-compose.yml`.
-3. The data (SQLite DB and nightly backups) lives in `./data`. Include `data/backups` in Hyper Backup.
-4. Health check from your LAN: `http://<nas-ip>:8080/health`. Don't forward port 8080 on your router.
+The NAS pulls `main` from GitHub every 15 minutes and redeploys on changes; secrets live outside the repo, readable only by root. Full steps: [docs/DEPLOY.md](docs/DEPLOY.md).
