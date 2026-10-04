@@ -1,13 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}la-vie admin{% endblock %}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap">
-<style>
   /* Industry theme: steel accent on a light technical ground, Barlow Condensed over Barlow,
      square hairline frames with "+" registration marks. Keeps the original class names. */
   :root {
@@ -131,26 +121,3 @@
   details summary { cursor: pointer; color: var(--link); font: 600 13px/1.4 var(--font-heading);
                     letter-spacing: .08em; text-transform: uppercase; }
   details[open] summary { margin-bottom: 10px; }
-</style>
-</head>
-<body>
-<header>
-  <nav>
-    <span class="brand">la-vie</span>
-    {% set here = request.url.path %}
-    <a href="/admin" class="{{ 'on' if here == '/admin' }}">Today</a>
-    <a href="/admin/movement" class="{{ 'on' if '/movement' in here or '/routines' in here }}">Movement</a>
-    <a href="/admin/learning" class="{{ 'on' if '/learning' in here or '/paths' in here or '/courses' in here }}">Learning</a>
-    <a href="/admin/hobbies" class="{{ 'on' if '/hobbies' in here }}">Hobbies</a>
-    <a href="/admin/settings" class="{{ 'on' if '/settings' in here }}">Settings</a>
-    {% if not hide_logout %}
-    <form method="post" action="/admin/logout"><button class="icon">Sign out</button></form>
-    {% endif %}
-  </nav>
-</header>
-<main>
-  {% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
-  {% block content %}{% endblock %}
-</main>
-</body>
-</html>

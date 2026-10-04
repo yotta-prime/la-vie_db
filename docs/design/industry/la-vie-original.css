@@ -1,0 +1,59 @@
+/* Verbatim copy of the <style> block in yotta-prime/la-vie_db app/admin/templates/base.html (main). */
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e3e3de;
+    --accent: #2f6f5e; --accent-text: #ffffff; --danger: #a33a2c; --done: #8a8a84; --chip: #eef3f1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161716; --panel: #1f201f; --text: #e9e9e4; --muted: #9a9a93; --line: #333532;
+      --accent: #6fb7a0; --accent-text: #0f1a16; --danger: #e07a6a; --done: #777; --chip: #26302c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: var(--panel); border-bottom: 1px solid var(--line); }
+  nav { max-width: 960px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 4px 16px;
+        flex-wrap: wrap; align-items: center; }
+  nav .brand { font-weight: 700; margin-right: 8px; }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a.on, nav a:hover { color: var(--text); }
+  nav form { margin-left: auto; }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.4rem; margin: 4px 0 16px; }
+  h2 { font-size: 1.1rem; margin: 0 0 10px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+            padding: 16px; margin-bottom: 16px; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); }
+  .msg { background: var(--chip); border-left: 3px solid var(--accent); padding: 8px 12px;
+         border-radius: 6px; margin-bottom: 16px; }
+  .error { border-left-color: var(--danger); }
+  label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 2px; }
+  input[type=text], input[type=url], input[type=number], input[type=password], input[type=date],
+  input[type=time], select, textarea {
+    width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--bg); color: var(--text); font: inherit; }
+  textarea { min-height: 60px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row > .grow { flex: 1 1 200px; min-width: 0; }
+  .check { display: inline-flex; gap: 6px; align-items: center; color: var(--text); font-size: .95rem; }
+  button, .btn { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line);
+                 background: var(--panel); color: var(--text); font: inherit; cursor: pointer;
+                 text-decoration: none; display: inline-block; }
+  button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button.danger { color: var(--danger); }
+  button.icon { padding: 4px 8px; }
+  form.inline { display: inline; }
+  ul.list { list-style: none; padding: 0; margin: 0; }
+  ul.list > li { border-top: 1px solid var(--line); padding: 10px 0; }
+  ul.list > li:first-child { border-top: 0; }
+  .chip { display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 999px;
+          background: var(--chip); color: var(--muted); }
+  .done { color: var(--done); text-decoration: line-through; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { text-align: left; padding: 6px 4px; border-top: 1px solid var(--line); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  details summary { cursor: pointer; color: var(--accent); }
+  details[open] summary { margin-bottom: 8px; }
