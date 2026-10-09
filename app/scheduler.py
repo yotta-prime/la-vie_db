@@ -1,4 +1,4 @@
-"""Job scheduler: daily planning, the per-minute prompt dispatcher, and the nightly backup."""
+"""Job scheduler: daily planning, the per-minute prompt dispatcher and bot watchdog, and the nightly backup."""
 
 from collections.abc import Awaitable, Callable
 from datetime import datetime
@@ -17,6 +17,7 @@ def build_scheduler(
     backup_time: str = "03:00",
     plan_today: Callable[[], object] | None = None,
     dispatch: Callable[[], Awaitable[None]] | None = None,
+    watchdog: Callable[[], object] | None = None,
 ) -> AsyncIOScheduler:
     tz = ZoneInfo(settings.timezone)
     scheduler = AsyncIOScheduler(timezone=tz)
@@ -42,6 +43,16 @@ def build_scheduler(
             dispatch,
             IntervalTrigger(seconds=60, timezone=tz),
             id="dispatch",
+            max_instances=1,
+            coalesce=True,
+            replace_existing=True,
+        )
+
+    if watchdog is not None:
+        scheduler.add_job(
+            watchdog,
+            IntervalTrigger(seconds=60, timezone=tz),
+            id="watchdog",
             max_instances=1,
             coalesce=True,
             replace_existing=True,

@@ -16,7 +16,8 @@ def test_app_starts_without_bot_token(tmp_path, monkeypatch):
         body = client.get("/health").json()
 
     assert body["status"] == "ok" and body["bot"] is False and body["version"]
-    assert {"nightly_backup", "plan_day", "dispatch"} <= set(body["jobs"])
+    assert body["polling"] is False and body["last_poll_seconds_ago"] is None
+    assert {"nightly_backup", "plan_day", "dispatch", "watchdog"} <= set(body["jobs"])
     assert (tmp_path / "lavie.db").exists()
     get_settings.cache_clear()
 

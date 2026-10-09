@@ -132,6 +132,7 @@ Then open `http://<nas-ip>:8080/admin` from a device on your home network. Signi
 - **Ship a change**: push or merge to `main`; it's live within 15 minutes.
 - **Deploy now**: Task Scheduler → `lavie update` → Run. Or over SSH: `sudo sh .../update.sh --force`.
 - **Logs**: Container Manager → Container → `lavie` → Log. Deploy history is in `logs/update.log`.
+- **Is the bot still talking to Telegram?** `/health` shows `polling` and `last_poll_seconds_ago` (normally under 10). It returns `"status": "stale"` (HTTP 503) after 2 minutes without a successful poll, and Container Manager then shows `lavie` as **unhealthy**. After 10 minutes the app restarts itself; look for `No successful Telegram poll` in the log.
 - **Change a secret**: edit `secrets/.env` (as root), then run the update with `--force` to restart.
 - **Roll back**: revert the commit on GitHub; the NAS follows `main`.
 

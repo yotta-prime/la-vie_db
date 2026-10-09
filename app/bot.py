@@ -1,11 +1,14 @@
 """Telegram bot connection. Uses long polling, so the NAS needs no inbound ports."""
 
 import logging
+import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 
 from telegram import BotCommand, ForceReply, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
 from telegram.error import BadRequest
+from telegram.request import HTTPXRequest
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -19,6 +22,10 @@ from app.config import Settings
 from app.engine import Button, Engine, Outgoing
 
 log = logging.getLogger(__name__)
+
+# Polls normally complete every few seconds (5s long-poll timeout), so these are generous.
+POLL_STALE_SECONDS = 120  # /health reports "stale" after this
+POLL_RESTART_SECONDS = 600  # the watchdog restarts the app after this
 
 COMMANDS = [
     ("status", "Today's remaining prompts, pauses and streaks"),
@@ -55,11 +62,30 @@ def _markup(buttons: list[list[Button]]) -> InlineKeyboardMarkup | None:
     )
 
 
+class _PollRequest(HTTPXRequest):
+    """The getUpdates connection, noting each time Telegram answers a poll successfully."""
+
+    def __init__(self, on_success: Callable[[], None]):
+        super().__init__(connection_pool_size=1)  # what PTB uses for getUpdates by default
+        self._on_success = on_success
+
+    async def do_request(self, *args, **kwargs) -> tuple[int, bytes]:
+        code, payload = await super().do_request(*args, **kwargs)
+        if code == 200:
+            self._on_success()
+        return code, payload
+
+
 class Bot:
     def __init__(self, settings: Settings, engine: Engine | None = None):
         self.settings = settings
         self.engine = engine
         self.app: Application | None = None
+        # Monotonic time of the last successful poll (or of startup, before the first one).
+        self._last_poll: float | None = None
+
+    def _polled(self) -> None:
+        self._last_poll = time.monotonic()
 
     @property
     def enabled(self) -> bool:
@@ -68,6 +94,21 @@ class Bot:
     @property
     def ready(self) -> bool:
         return self.app is not None and self.settings.telegram_owner_chat_id is not None
+
+    @property
+    def polling(self) -> bool:
+        return self.app is not None and self.app.updater is not None and self.app.updater.running
+
+    def seconds_since_poll(self) -> float | None:
+        """Seconds since Telegram last answered a poll; None if the bot isn't running."""
+        if self.app is None or self._last_poll is None:
+            return None
+        return time.monotonic() - self._last_poll
+
+    @property
+    def stale(self) -> bool:
+        age = self.seconds_since_poll()
+        return age is not None and (age > POLL_STALE_SECONDS or not self.polling)
 
     def _owner_filter(self) -> filters.BaseFilter:
         if self.settings.telegram_owner_chat_id is None:
@@ -80,7 +121,12 @@ class Bot:
         return chat is not None and chat.id == self.settings.telegram_owner_chat_id
 
     def build(self) -> Application:
-        app = Application.builder().token(self.settings.telegram_bot_token).build()
+        app = (
+            Application.builder()
+            .token(self.settings.telegram_bot_token)
+            .get_updates_request(_PollRequest(self._polled))
+            .build()
+        )
         owner = self._owner_filter()
 
         app.add_handler(CommandHandler("start", self._start))
@@ -103,6 +149,7 @@ class Bot:
             log.warning("TELEGRAM_BOT_TOKEN not set; bot disabled")
             return
         self.app = self.build()
+        self._polled()  # count from startup until the first poll answers
         await self.app.initialize()
         if self.engine is not None:
             await self.app.bot.set_my_commands([BotCommand(c, d) for c, d in COMMANDS])
@@ -131,6 +178,19 @@ class Bot:
             self.settings.telegram_owner_chat_id, msg.text, parse_mode=ParseMode.HTML, reply_markup=markup
         )
         return sent.message_id
+
+    def check_polling(self, restart: Callable[[], None]) -> None:
+        """Scheduler job: if Telegram hasn't answered a poll for too long, restart the app.
+
+        Polling can stop (lost connection, stuck request) while the app itself keeps running,
+        so nothing else would notice. Docker's restart policy brings the container back.
+        """
+        age = self.seconds_since_poll()
+        if age is None:
+            return
+        if age > POLL_RESTART_SECONDS or (not self.polling and age > POLL_STALE_SECONDS):
+            log.error("No successful Telegram poll for %.0fs (polling=%s); restarting", age, self.polling)
+            restart()
 
     async def dispatch_due(self) -> None:
         """Scheduler job: send prompts whose time has come."""

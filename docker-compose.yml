@@ -12,6 +12,14 @@ services:
     # Time to shut down cleanly on deploy (the bot finishes its current Telegram request)
     # before Docker kills it, which DSM would report as "stopped unexpectedly".
     stop_grace_period: 30s
+    # Marks the container "unhealthy" in Container Manager when /health fails, e.g. the bot
+    # has stopped hearing from Telegram. (The app restarts itself after 10 minutes of that.)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 60s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
     env_file:
       - ${LAVIE_ENV_FILE:-.env}
     environment:
