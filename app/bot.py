@@ -1,6 +1,7 @@
 """Telegram bot connection. Uses long polling, so the NAS needs no inbound ports."""
 
 import logging
+import os
 import time
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -34,6 +35,7 @@ COMMANDS = [
     ("log", "Log something: /log run 30m"),
     ("pause", "Pause prompts: /pause hobby 2d"),
     ("resume", "Resume prompts: /resume [area]"),
+    ("health", "Version and connection check"),
     ("help", "What I can do"),
 ]
 
@@ -45,7 +47,8 @@ HELP = (
     "/focus [min]: start a focus block (default 25)\n"
     "/log &lt;what&gt; [duration]: log something, e.g. <code>/log run 30m</code>\n"
     "/pause [area|all] [duration]: e.g. <code>/pause</code>, <code>/pause hobby 2d</code>\n"
-    "/resume [area]: undo a pause\n\n"
+    "/resume [area]: undo a pause\n"
+    "/health: deployed version and connection check\n\n"
     "Areas: movement, focus, learning, hobby. Quiet hours are respected."
 )
 
@@ -131,6 +134,7 @@ class Bot:
 
         app.add_handler(CommandHandler("start", self._start))
         app.add_handler(CommandHandler("ping", self._ping, filters=owner))
+        app.add_handler(CommandHandler("health", self._health, filters=owner))
         if self.engine is not None:
             app.add_handler(CommandHandler("help", self._help, filters=owner))
             app.add_handler(CommandHandler("status", self._status, filters=owner))
@@ -223,6 +227,18 @@ class Bot:
 
     async def _ping(self, update: Update, _ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("pong")
+
+    def health_text(self) -> str:
+        age = self.seconds_since_poll()
+        return (
+            f"<b>{'stale' if self.stale else 'ok'}</b>\n"
+            f"version: <code>{os.environ.get('APP_VERSION', 'dev')}</code>\n"
+            f"polling: {'yes' if self.polling else 'no'}\n"
+            f"last poll: {'n/a' if age is None else f'{age:.0f}s ago'}"
+        )
+
+    async def _health(self, update: Update, _ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_html(self.health_text())
 
     async def _help(self, update: Update, _ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(HELP)

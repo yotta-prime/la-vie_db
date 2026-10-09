@@ -77,3 +77,12 @@ def test_poll_request_records_only_successful_answers(monkeypatch):
     for _ in range(3):
         asyncio.run(req.do_request("url", "POST"))
     assert calls == [1, 1]
+
+
+def test_health_text(monkeypatch):
+    monkeypatch.setenv("APP_VERSION", "abc1234")
+    bot, clock = running_bot(monkeypatch)
+    clock.now += 3
+    assert bot.health_text() == "<b>ok</b>\nversion: <code>abc1234</code>\npolling: yes\nlast poll: 3s ago"
+    clock.now += POLL_STALE_SECONDS
+    assert bot.health_text().startswith("<b>stale</b>")
