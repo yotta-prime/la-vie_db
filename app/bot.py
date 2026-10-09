@@ -161,6 +161,15 @@ class Bot:
         # Short long-poll timeout so shutdown (which waits for the pending request) is quick.
         await self.app.updater.start_polling(drop_pending_updates=True, timeout=5)
         log.info("Telegram bot polling")
+        await self.announce_start()
+
+    async def announce_start(self) -> None:
+        """Tell the owner the bot is (back) up, so deploys and restarts show up in the chat."""
+        try:
+            await self.send(f"la-vie started, version <code>{os.environ.get('APP_VERSION', 'dev')}</code>")
+        except Exception:
+            # Never let a failed notice stop startup; the bot keeps running without it.
+            log.exception("Failed to send startup message")
 
     async def stop(self) -> None:
         if self.app is None:

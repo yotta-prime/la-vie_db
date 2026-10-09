@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     # Password for the admin page. The admin page stays locked until this is set.
     admin_password: str = ""
 
+    # Optional outside monitor (e.g. a healthchecks.io ping URL). Checked in every minute
+    # while the bot is talking to Telegram; the monitor alerts you when check-ins stop.
+    heartbeat_url: str = ""
+
     timezone: str = "Europe/London"
     data_dir: Path = Path("data")
     backup_keep: int = 14

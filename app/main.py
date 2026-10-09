@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, Response
 
-from app import admin
+from app import admin, heartbeat
 from app.bot import Bot
 from app.config import get_settings
 from app.db import Database
@@ -54,12 +54,17 @@ async def lifespan(app: FastAPI):
     def plan_today() -> None:
         engine.plan_day(datetime.now(tz).date())
 
+    def watchdog() -> None:
+        bot.check_polling(restart)
+        if bot.polling and not bot.stale:
+            heartbeat.ping(settings.heartbeat_url)
+
     scheduler = build_scheduler(
         settings,
         backup_time,
         plan_today=plan_today,
         dispatch=bot.dispatch_due,
-        watchdog=lambda: bot.check_polling(restart),
+        watchdog=watchdog,
     )
     scheduler.start()
 

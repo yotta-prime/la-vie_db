@@ -86,3 +86,42 @@ def test_health_text(monkeypatch):
     assert bot.health_text() == "<b>ok</b>\nversion: <code>abc1234</code>\npolling: yes\nlast poll: 3s ago"
     clock.now += POLL_STALE_SECONDS
     assert bot.health_text().startswith("<b>stale</b>")
+
+
+def test_announce_start_sends_version_and_survives_failure(monkeypatch):
+    monkeypatch.setenv("APP_VERSION", "abc1234")
+    bot = Bot(Settings(telegram_bot_token="x", telegram_owner_chat_id=5))
+    sent = []
+
+    async def ok(msg):
+        sent.append(msg)
+
+    async def broken(msg):
+        raise RuntimeError("network down")
+
+    bot.send = ok
+    asyncio.run(bot.announce_start())
+    assert sent == ["la-vie started, version <code>abc1234</code>"]
+
+    bot.send = broken
+    asyncio.run(bot.announce_start())  # logged, not raised
+
+
+def test_heartbeat_ping(monkeypatch):
+    import httpx
+
+    from app import heartbeat
+
+    calls = []
+
+    def fake_get(url, timeout):
+        calls.append(url)
+        if "down" in url:
+            raise httpx.ConnectError("no route")
+        return httpx.Response(200, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(heartbeat.httpx, "get", fake_get)
+    heartbeat.ping("")  # not configured: nothing sent
+    heartbeat.ping("https://hc-ping.com/abc")
+    heartbeat.ping("https://down.example/abc")  # logged, not raised
+    assert calls == ["https://hc-ping.com/abc", "https://down.example/abc"]

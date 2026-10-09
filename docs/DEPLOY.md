@@ -127,6 +127,21 @@ sudo sh /volume1/docker/lavie/repo/deploy/update.sh --force
 
 Then open `http://<nas-ip>:8080/admin` from a device on your home network. Signing in lasts 30 days per browser. Changing the password signs every browser out.
 
+### 8. Outside alert (optional, recommended)
+
+The NAS can't tell you it's offline, so let an outside service notice instead. The app checks in every minute while the bot is talking to Telegram; if the check-ins stop (NAS off, home internet down, container stopped, bot stuck), you get an email or push alert.
+
+1. Sign up at [healthchecks.io](https://healthchecks.io) (free) and add a check named `la-vie`.
+2. Set **Period** to **1 minute** and **Grace** to **15 minutes**. That's long enough for a deploy, or the app's own 10-minute self-restart, to fix things before you're alerted.
+3. Copy its ping URL and add it to the secrets file, then redeploy:
+   ```sh
+   sudo sh -c 'umask 077; echo "HEARTBEAT_URL=https://hc-ping.com/<uuid>" >> /volume1/docker/lavie/secrets/.env'
+   sudo sh /volume1/docker/lavie/repo/deploy/update.sh --force
+   ```
+4. Install the healthchecks.io integration you want (email is on by default; the iPhone app or Telegram work too).
+
+The bot also sends **"la-vie started, version …"** to your chat whenever it starts, so deploys and restarts show up in Telegram.
+
 ## Day to day
 
 - **Ship a change**: push or merge to `main`; it's live within 15 minutes.
