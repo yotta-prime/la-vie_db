@@ -1,6 +1,6 @@
 # la-vie_db
 
-Personal daily-life service: Telegram prompts for movement, focus, learning paths and hobbies, running in Docker on a Synology NAS. What it does: [docs/SPEC.md](docs/SPEC.md). How it's deployed and run: [docs/DEPLOY.md](docs/DEPLOY.md).
+Personal daily-life service: Telegram prompts for movement, focus, learning paths and hobbies, running in Docker on a Synology NAS. What it does: [docs/SPEC.md](docs/SPEC.md). How it's deployed and run: [docs/DEPLOY.md](docs/DEPLOY.md). Design review and recommended improvements: [docs/REVIEW-2026-10.md](docs/REVIEW-2026-10.md).
 
 ## Setup
 
