@@ -3239,3 +3239,1289 @@ Next, the deploy guide's **Day to day** section:
 - *Edit*: docs\DEPLOY.md
 
 </details>
+
+Now the chat history. This session ran on both 4 and 12 October, so I'll add date headings to the export before re-running it:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\export_chat.py
+- *Edit*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\export_chat.py
+- *Edit*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\export_chat.py
+- *PowerShell*: Re-export chat history and scan for secrets
+
+</details>
+
+The secrets scan is clean, and the history now has headings for **Sunday 4 October** and **Monday 12 October**. I'll check where the previous deploy got to, then commit and push.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check previous deploy and pending changes
+
+</details>
+
+The NAS is still on `3f06316` at 13:10. I'll check when `4f91b9f` was pushed before reading anything into that.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Show commit times
+- *PowerShell*: Commit and push docs and chat history
+- *TaskStop*
+- *PowerShell*: Watch NAS for deploy of de079c5
+
+</details>
+
+The docs are updated and pushed as `de079c5`. The NAS should deploy it at 13:15, together with the recording links, and I'm watching for that.
+
+**Documentation:**
+- **README:**
+  - The admin page link and how to sign in.
+  - A new **Learning content from files** section: what `content/oreilly.yaml` holds, how the add-only import works, how to add an event or a recording link later, and the file format.
+  - The list of Telegram commands and the startup message.
+  - The note about local `.env` and the tests.
+- **SPEC:**
+  - **Learning content files**, including the full O'Reilly allocation table.
+  - **Reliability and monitoring**, covering the 9 October watchdog and heartbeat work.
+  - The admin page address, the database version (now 2), and a weekly-summary default of Sunday 18:00.
+  - An **Implementation status** table showing what's built, what's built but not configured (healthchecks.io), and what's not built yet (flashcard reviews, CSV export).
+- **DEPLOY:** **Day to day** now explains how to confirm a deploy, and how to update learning content and check that it imported.
+- **Chat history:** re-exported to cover both days, with date headings. Secrets are still redacted.
+
+**Sync status:**
+
+| Where | Version |
+|---|---|
+| Your PC | `de079c5`, nothing uncommitted |
+| GitHub | `de079c5` |
+| NAS | `3f06316` until the **13:15** run, which brings in both the recording links and the docs |
+
+Once it's deployed, open any O'Reilly course on the admin page's **Learning** tab, and each lesson should show an **open** link. I'll confirm the deploy here when the watcher reports.
+
+## You · 13:15
+
+<task-notification>
+<task-id>b1wz14a8a</task-id>
+<tool-use-id>toolu_01PzqsMB2H6pWh1pGNJcexCM</tool-use-id>
+<output-file>C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\b1wz14a8a.output</output-file>
+<status>completed</status>
+<summary>Background command "Watch NAS for deploy of de079c5" completed (exit code 0)</summary>
+</task-notification>
+
+<details><summary>Tool calls</summary>
+
+- *Read*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\b1wz14a8a.output
+
+</details>
+
+## Claude · 13:15
+
+The scheduled 13:15 run deployed `de079c5` by itself. `/health` reported it at 13:15:42: status ok, polling, last poll 0 seconds ago. All three places are in sync:
+
+| Where | Version |
+|---|---|
+| Your PC | `de079c5`, nothing uncommitted |
+| GitHub | `de079c5` |
+| NAS | `de079c5`, healthy and polling |
+
+This deploy included the recording links. When the app started, the importer should have filled in links for the 43 lessons that already existed. I can't see the lessons without the admin password, so please check:
+
+1. Open **http://192.168.0.198:8080/admin/learning**, then any O'Reilly course. Lessons should have an **open** link, except the 9 without a recording yet.
+2. Telegram should have a **"la-vie started, version de079c5"** message from about 13:15.
+
+Still open from today's list:
+- **Step 2:** the `/health` reply in Telegram.
+- **Step 3:** the rest of the admin page check. A settings change should save and show up in today's plan.
+- **Step 4:** Friday's logs from Container Manager and Log Center, around 06:30.
+- **Step 1 fixes:** the stale chat ID in your local `.env`, and making the tests ignore `.env`.
+
+## You · 13:16
+
+Next (1) I want to separately open the o'reilly learning plans fromn telegram. (2) Also I'd like the ability to view the courses and recordings in a manner identical to the file oreilly_events_06-Oct-26.md, on a separate page; (3) I'd also like the nas to check my e-mail and update this list and the learnign plans; (4) I also need to clearly de-lineate between (a) pendikng course (b) courses completed with recordings (c) course that were planned, I didn't attend but I need to watch teh recordings. Will need check boxes += telegram confirmations for each scenario (5) Deep analysis of this stack and iot's design, compared with similar projects and recommed a top ten list of improvements
+
+## Claude · 13:16
+
+That's five sizeable items, and they depend on each other. Items 1–3 all need the event statuses in item 4, so I'd build in this order:
+
+1. **Item 4:** event statuses, checkboxes and Telegram confirmations
+2. **Item 2:** the events page
+3. **Item 1:** browsing your O'Reilly courses from Telegram
+4. **Item 3:** the NAS checking your email, the biggest piece
+5. **Item 5:** the analysis and top-ten list, which I can write alongside the others
+
+A few decisions shape the design, so I'll settle those before building anything:
+
+<details><summary>Tool calls</summary>
+
+- *AskUserQuestion*: For events you attended live (status b), what should la-vie do with them?; How should the NAS read your email for O'Reilly updates (item 3)?; Where should the events page (item 2) live?; Should the events page also include page 2 of the file (the O'Reilly Radar newsletter summary and CV snippet)?
+
+</details>
+
+> **Answers:** "For events you attended live (status b), what should la-vie do with them?"="Keep queued for review", "How should the NAS read your email for O'Reilly updates (item 3)?"="Gmail filter + separate inbox (Recommended)", "Where should the events page (item 2) live?"="In the admin site (Recommended)", "Should the events page also include page 2 of the file (the O'Reilly Radar newsletter summary and CV snippet)?"="Events + Radar summary"
+
+<details><summary>Tool calls</summary>
+
+- *Read*: app\models.py
+- *Edit*: app\models.py
+- *Edit*: app\models.py
+- *Edit*: app\migrations.py
+- *PowerShell*: Check generated course_step DDL types
+- *Edit*: app\migrations.py
+
+</details>
+
+Next, the event fields go into `content/oreilly.yaml`, parsed from your events file by script with the same date checks as before:
+
+<details><summary>Tool calls</summary>
+
+- *Write*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\add_events.py
+
+</details>
+
+Two problems with that script. Importing from `add_links.py` would run that whole script again, and fields could end up after a blank line. I'll fix both.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\add_events.py
+- *Edit*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\add_events.py
+- *PowerShell*: Add event fields and verify the YAML
+
+</details>
+
+The script failed before writing anything; the YAML is unchanged. The AST lookup tripped over a tuple assignment in `add_links.py`, so I'll make it check the target type first.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\add_events.py
+- *PowerShell*: Re-run event field insertion and verify
+- *Read*: app\content.py
+- *Edit*: app\content.py
+- *Edit*: app\content.py
+- *Edit*: app\content.py
+- *Edit*: app\selection.py
+- *Edit*: app\selection.py
+- *Edit*: app\selection.py
+
+</details>
+
+Next, the learning prompt text, which should say why each lesson is being suggested:
+
+<details><summary>Tool calls</summary>
+
+- *Grep*: body = f"Next: \{html.escape\(step.title\)\}\{link\(step.url\)\}"
+- *Edit*: app\engine.py
+- *Edit*: app\engine.py
+
+</details>
+
+Now the Telegram confirmations, starting with the engine code they hook into:
+
+<details><summary>Tool calls</summary>
+
+- *Read*: app\engine.py
+- *Grep*: def due|def handle_action|exempt = |if now - p.scheduled_for > EXPIRE_AFTER|outcome = Outcome\(action\)|if action == "another"
+- *Read*: app\engine.py
+- *Read*: app\engine.py
+
+</details>
+
+I'll add an optional link to buttons, so a message can carry an **Open recording** button:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\engine.py
+- *Edit*: app\engine.py
+- *Edit*: app\engine.py
+- *Edit*: app\engine.py
+
+</details>
+
+Now the rendering for the two new prompt kinds, plus their button handling:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\engine.py
+- *Edit*: app\engine.py
+- *Edit*: app\engine.py
+- *Grep*: payload\["text"\] = text\n        p.payload = payload\n        return Outgoing
+
+</details>
+
+Now the bot needs to render link buttons:
+
+<details><summary>Tool calls</summary>
+
+- *Grep*: def _markup
+- *Edit*: app\bot.py
+- *Edit*: app\content.py
+- *Edit*: app\content.py
+- *Edit*: app\migrations.py
+
+</details>
+
+I'll run the existing tests before writing new ones:
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Run tests after event changes
+- *Edit*: tests\test_content.py
+- *PowerShell*: Update v1 migration test and rerun
+- *Write*: tests\test_events.py
+- *PowerShell*: Run event tests
+- *PowerShell*: Extract Radar summary and add markdown dependency
+
+</details>
+
+Next, the routes for the events page:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\admin\routes.py
+- *Edit*: app\admin\routes.py
+- *Grep*: ^from datetime import|^from pathlib
+
+</details>
+
+Now the template, with one row layout shared by every table:
+
+<details><summary>Tool calls</summary>
+
+- *Write*: app\admin\templates\oreilly.html
+- *Edit*: app\admin\templates\base.html
+
+</details>
+
+`%-d` isn't supported on Windows, where the tests run, so I'll format the date another way:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\admin\templates\oreilly.html
+- *Edit*: tests\test_admin.py
+- *Edit*: tests\test_admin.py
+- *Grep*: ^from app.models import \(
+- *PowerShell*: Run full suite with events page
+- *Edit*: tests\test_admin.py
+- *PowerShell*: Re-run full suite
+- *Write*: app\oreilly.py
+- *Edit*: app\engine.py
+
+</details>
+
+When a lesson is marked watched from `/oreilly`, it should also finish the course if that was the last lesson, the same as the 17:30 prompt does. I'll add that, then wire `/oreilly` into the bot.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\oreilly.py
+- *Edit*: app\oreilly.py
+- *Grep*: async def _callback|kind, \*parts|if kind == "l" and|"/summary: |\("health", "Version|CommandHandler\("summary"
+- *Edit*: app\bot.py
+- *Edit*: app\bot.py
+- *Edit*: app\bot.py
+- *Edit*: app\bot.py
+- *Grep*: async def _summary
+- *Edit*: app\bot.py
+- *Write*: tests\test_oreilly_telegram.py
+- *PowerShell*: Run full suite incl. /oreilly tests
+
+</details>
+
+All 63 tests pass, so **items 1, 2 and 4 are built**. Before pushing, I'll update the docs for the new statuses, the O'Reilly page and `/oreilly`:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: docs\SPEC.md
+- *Edit*: docs\SPEC.md
+- *Edit*: docs\SPEC.md
+- *Edit*: docs\SPEC.md
+- *Edit*: docs\SPEC.md
+- *PowerShell*: Update README for O'Reilly page, statuses, /oreilly
+- *Grep*: Add a recording link later|Live events\*\* also take
+
+</details>
+
+All three README changes applied. I'll commit and push this batch by file name, then watch the deploy.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Review changes before staging
+- *PowerShell*: Check requirements encoding, commit, push
+- *PowerShell*: Watch NAS for deploy of 0babe52
+
+</details>
+
+The NAS should deploy this at the **13:30** run; my watcher is running. While it does, I'll start item 5 with some research on comparable projects.
+
+<details><summary>Tool calls</summary>
+
+- *WebSearch*: self-hosted habit tracker Telegram bot open source Docker reminders streaks 2026
+- *WebSearch*: self-hosted personal learning tracker spaced repetition FSRS open source web app comparison Anki alternatives
+- *WebSearch*: Synology Docker GitOps auto deploy from GitHub best practice Watchtower vs git pull cron healthcheck
+
+</details>
+
+The research is enough to ground the comparison. I'll write the analysis into the repo as `docs/REVIEW-2026-10.md`, next to the spec.
+
+<details><summary>Tool calls</summary>
+
+- *Write*: docs\REVIEW-2026-10.md
+- *PowerShell*: Check deploy of 0babe52
+
+</details>
+
+The NAS is still on `de079c5` at 13:28, with the 13:30 run two minutes away. I'll commit the review **after** that deploy completes; pushing now would make the NAS skip straight to a newer version, and my watcher wouldn't see `0babe52` at all.
+
+Here's where things stand while we wait:
+
+**Built and pushed as `0babe52`** (63 tests pass, deploying at 13:30):
+- **Item 4, event statuses:**
+  - Each event lesson now has a date, presenters and attended/missed status, with a database update that backs up first.
+  - Missed recordings are suggested first and attended ones are queued for review. Pending events are never suggested.
+  - **Telegram confirmations:** **Did you attend? [Attended] [Missed]** the day after an event, and **Recording ready [▶ Open] [✓ Watched]** when a link arrives.
+- **Item 2, the O'Reilly page** at http://192.168.0.198:8080/admin/oreilly:
+  - It follows your file's layout, with a new **To watch (missed live)** section.
+  - Every row has Attended / Missed / Watched buttons, and awaiting rows have a box to paste a recording link.
+  - The Radar summary sits underneath.
+- **Item 1, `/oreilly` in Telegram:** counts, To watch / Review / Upcoming / Awaiting lists, and **Paths & courses** down to each lesson, with **▶ Open recording**, **✓ Watched** and **Attended / Missed** buttons.
+
+**First thing to expect after the deploy:** within a minute, Telegram should ask **"Did you attend? Claude Certified Associate Exam Prep"** (8 Oct). It's the one past event still marked as registered, so it's a good live test of item 4.
+
+**Item 5 is written** (to be committed after the deploy): `docs/REVIEW-2026-10.md`. It reviews the stack, compares it with Habitica, Loop, Beaver Habits, OpenMemo, Anki/FSRS and n8n, and lists 8 risks and a ranked top ten. The top four are small and protective:
+1. Run the tests on GitHub, and have the NAS deploy only commits that pass.
+2. Pin library versions, so rebuilds can't pull in surprise breaking changes.
+3. Send a Telegram alert when a deploy fails, and turn on the heartbeat.
+4. Back up off the NAS, and test a restore once.
+
+**Item 3, email, needs you first.** The design is a Gmail filter that forwards O'Reilly mail to a separate inbox, which the NAS reads. Which provider do you want for that inbox? A second Gmail account is the simplest choice: you'd turn on 2FA there and create an app password for the NAS. Also confirm the AI step for refreshing the Radar summary (Claude API, a few pence a month).
+
+## You · 13:31
+
+<task-notification>
+<task-id>bl0lvfzb4</task-id>
+<tool-use-id>toolu_01MdHrzJYHnqZ5F97QpukYgq</tool-use-id>
+<output-file>C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\bl0lvfzb4.output</output-file>
+<status>completed</status>
+<summary>Background command "Watch NAS for deploy of 0babe52" completed (exit code 0)</summary>
+</task-notification>
+
+<details><summary>Tool calls</summary>
+
+- *Read*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\bl0lvfzb4.output
+- *Edit*: README.md
+- *PowerShell*: Commit and push review doc
+- *PowerShell*: Watch NAS for deploy of fee4548
+
+</details>
+
+## Claude · 13:31
+
+Items 1, 2 and 4 are built and running on the NAS, and item 5 is written. Item 3, the email reading, needs two answers from you before I start.
+
+| Where | Version |
+|---|---|
+| Your PC | `fee4548` (the review), nothing uncommitted |
+| GitHub | `fee4548` |
+| NAS | `0babe52`, deployed by the 13:30 run, healthy and polling. `fee4548` is docs only and is due at 13:45. |
+
+| Item | Status |
+|---|---|
+| 1. `/oreilly` in Telegram | ✓ Live |
+| 2. O'Reilly page with Radar summary | ✓ Live at http://192.168.0.198:8080/admin/oreilly |
+| 3. NAS reads email | Waiting on your two answers below |
+| 4. Statuses, checkboxes and Telegram confirmations | ✓ Live |
+| 5. Analysis and top ten | ✓ [docs/REVIEW-2026-10.md](docs/REVIEW-2026-10.md) |
+
+**Please check, now that it's live:**
+1. **Telegram:** did **"Did you attend? Claude Certified Associate Exam Prep"** arrive at about 13:31? Answer it and see what comes back.
+2. **Telegram:** send `/oreilly` and tap through **📚 Paths & courses** down to a lesson. **▶ Open recording** should open the link.
+3. **Admin page:** open the **O'Reilly** tab. Check the layout matches your file, then try Attended / Missed / Watched on a row.
+
+**For item 3:**
+- Which provider should the dedicated O'Reilly inbox use? A second Gmail account is the simplest.
+- Should the Radar summary be refreshed using the Claude API (a few pence a month)? If not, it stays exactly as in your file.
+
+## You · 13:38
+
+I'm going to add another gmail address - quick link. Also the Container stopped unexpectedly mails have returned to haunt me...
+
+## Claude · 13:38
+
+Here's the sign-up link for the new address: **https://accounts.google.com/signup**
+
+Once it exists, turn on 2-Step Verification in that account, then create an **app password** for the NAS at https://myaccount.google.com/apppasswords. Don't paste it here. I'll give you the command to put it straight into the NAS secrets file.
+
+Now the "stopped unexpectedly" emails. I'll check something before answering, because my earlier explanation may have been wrong.
+
+<details><summary>Tool calls</summary>
+
+- *WebSearch*: Synology Container Manager "stopped unexpectedly" notification docker compose recreate watchtower update email
+- *Edit*: deploy\update.sh
+- *Read*: deploy\update.sh
+- *Edit*: docs\DEPLOY.md
+- *PowerShell*: Check fee4548 deploy
+- *PowerShell*: Commit and push update.sh change
+- *TaskStop*
+- *PowerShell*: Watch NAS for deploy of 71644af
+
+</details>
+
+I'll also correct my saved notes, so a future session doesn't repeat the wrong explanation:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\la-vie-nas-deploy.md
+
+</details>
+
+To create the Gmail account: **https://accounts.google.com/signup**. Then, in the new account:
+1. Turn on **2-Step Verification**. This is required before Google lets you create an app password.
+2. Create an app password called "la-vie NAS" at **https://myaccount.google.com/apppasswords**. Keep it to yourself rather than pasting it here; I'll give you a command that puts it straight into the NAS secrets file.
+3. **In your main Gmail:** create a filter so O'Reilly emails are forwarded to the new address. I'll give you the exact filter when we start item 3.
+
+**The emails:** I had the cause wrong. DSM sends "stopped unexpectedly" whenever a container is stopped by anything other than DSM itself, including our own deploys ([source](https://drfrankenstein.co.uk/watchtower-automated-updates-in-container-manager-on-a-synology-nas/)). The 30-second stop fix from 4 October solved a different, real problem, but it was never going to stop these. Each of today's app deploys (12:30, 13:15, 13:30) sent one, and the 13:45 run will send one more.
+
+**What I've changed (`71644af`):** the NAS now restarts the container only when something inside it changed, meaning the app, content, Dockerfile, compose file or requirements. Docs-only commits, like the review and the chat history, no longer restart the bot. This commit itself still deploys with a restart at 13:45, because it's the old copy of the script that runs it. I can't test shell scripts on this PC, so after a docs-only commit later, `update.log` should show `updated repo to … (container not restarted)` and no email should arrive.
+
+**To stop them completely:** set up the healthchecks.io heartbeat (DEPLOY.md step 8), which alerts you if the bot really goes down. Then turn off **Control Panel → Notification → Rules → Container Manager → "stopped unexpectedly"**.
+
+| Where | Version |
+|---|---|
+| Your PC | `71644af`, nothing uncommitted |
+| GitHub | `71644af` |
+| NAS | `0babe52` → `71644af` at 13:45 (I'm watching) |
+
+## You · 13:45
+
+<task-notification>
+<task-id>biqge3fwm</task-id>
+<tool-use-id>toolu_01UByfVYU3L86q3FryoovssE</tool-use-id>
+<output-file>C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\biqge3fwm.output</output-file>
+<status>completed</status>
+<summary>Background command "Watch NAS for deploy of 71644af" completed (exit code 0)</summary>
+</task-notification>
+
+<details><summary>Tool calls</summary>
+
+- *Read*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\biqge3fwm.output
+
+</details>
+
+## Claude · 13:45
+
+The 13:45 run deployed `71644af`: healthy and polling at 13:45:20. Your PC, GitHub and the NAS are all on the same version.
+
+That deploy was the old script's last restart, so expect **one more "stopped unexpectedly" email for about 13:45**. From now on, only commits that change the app restart the bot. The next docs-only commit will confirm it, and I'll check then.
+
+**Waiting on you:**
+- **New Gmail address:** create it, turn on 2-Step Verification and create an app password. Then item 3 can start.
+- **Claude API for the Radar summary:** yes or no.
+- **Testing the O'Reilly features:**
+  - Did the "Did you attend? Claude Certified Associate Exam Prep" message arrive?
+  - Try `/oreilly` in Telegram.
+  - Check the **O'Reilly** tab on the admin page.
+
+## You · 13:52
+
+Need to add times for planned events, also if I watched a reciording it got lined-out i the list -I don't want that I just need a status LED to so that I can review (attended, or not AND watched recording, or not); also let me see the top ten recos please here...
+
+## Claude · 13:53
+
+Here's the plan for the first two:
+1. **Times for planned events.** Your events file only has dates, not times, so I'll add a time field. You'll be able to set the date and time on each upcoming event from the O'Reilly page. Times are shown everywhere the event appears, and the content file can carry them too.
+2. **No more strike-through.** Instead, every row gets **two status LEDs**: attendance (🟢 attended, 🔴 missed, 🟡 registered or waitlisted) and recording (🟢 watched, ⚪ not yet). They'll appear on the page and in `/oreilly`.
+
+The top ten list is at the end of this message.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\models.py
+- *Edit*: app\migrations.py
+
+</details>
+
+PyYAML would read an unquoted `time: 17:00` as the number 1020, an old YAML base-60 rule. So the importer will handle both forms:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\content.py
+- *Edit*: app\content.py
+- *Edit*: app\admin\routes.py
+
+</details>
+
+Now the page: LEDs instead of strike-through, times shown with dates, and date/time inputs on upcoming events.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\admin\templates\oreilly.html
+- *Edit*: app\admin\templates\oreilly.html
+- *Edit*: app\admin\templates\oreilly.html
+- *PowerShell*: Swap status chips for LEDs, drop strike-through
+
+</details>
+
+I'll add a legend under the page intro:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\admin\templates\oreilly.html
+- *Read*: app\oreilly.py
+
+</details>
+
+Now the same LEDs in Telegram (`/oreilly` lists, lesson views, and the confirmation messages), plus times:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\oreilly.py
+- *Edit*: app\oreilly.py
+- *Edit*: app\oreilly.py
+- *Grep*: bits = \[f"\{st.event_date:%a %d %b %Y\}"
+- *Edit*: app\engine.py
+- *Grep*: ICON\[|"o:noop"|toast = "Marked
+
+</details>
+
+`ICON` isn't used any more, so I'll remove it, then update the tests and add new ones for times and LEDs:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: app\oreilly.py
+- *PowerShell*: Update existing tests for LEDs and schema v4
+- *Edit*: tests\test_oreilly_telegram.py
+- *Edit*: tests\test_content.py
+- *Edit*: tests\test_admin.py
+- *PowerShell*: Run full suite
+
+</details>
+
+All 65 pass. I'll add two lines to the spec for times and LEDs, then push:
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: docs\SPEC.md
+- *PowerShell*: Update SPEC schema line, commit, push
+- *PowerShell*: Watch NAS for deploy of 8a282ee
+
+</details>
+
+Both changes are pushed as `8a282ee`, with 65 tests passing. The NAS deploys it at **14:00**, and I'm watching for it. It changes the app, so it restarts the bot and you'll get one "stopped unexpectedly" email.
+
+**What changed:**
+- **Start times:**
+  - **Setting them:** on the O'Reilly page, upcoming events have date and time boxes plus a **Set** button. The content file can also carry a time, written as `time: "17:00"`.
+  - **Showing them:** the time appears next to the date on the page, in `/oreilly`, and in the confirmation messages.
+  - **What I need from you:** your events file has no times, so you'll have to set them for the 13 and 15 October events, and for the Katas once it has a date.
+- **No more strike-through.** Watched events stay fully readable. Instead, each row shows **two LEDs** with labels: attendance (🟢 attended, 🔴 missed, 🟡 registered or waitlisted) and recording (🟢 watched, ⚪ not yet). A legend at the top of the page explains them, and `/oreilly` uses the same LEDs in every list, for example `🟢🟢 30 Sep 2026 · AI-Assisted…`.
+
+**The top ten**, from [docs/REVIEW-2026-10.md](docs/REVIEW-2026-10.md):
+
+| # | Improvement | Why | Effort |
+|---|---|---|---|
+| 1 | **Run the tests on GitHub for every push; the NAS deploys only commits that passed.** Also stop the tests reading your local `.env`. | Today, anything pushed to `main` goes live within 15 minutes with no check. | Small |
+| 2 | **Reproducible builds:** fix library and base-image versions, and let GitHub's Dependabot propose updates that the tests check. | Every rebuild currently picks up the newest library versions, so one breaking release could take the bot down. | Small |
+| 3 | **Telegram alert when a deploy fails, and turn on the healthchecks.io heartbeat.** | Deploy failures are silent today, and the heartbeat is the right way to retire DSM's emails. | Small |
+| 4 | **Back up off the NAS, and test a restore once:** Hyper Backup to Synology C2 or USB, with the secrets in your password manager. | The nightly backups sit on the same disk as the database. | Small |
+| 5 | **Build the image on GitHub; the NAS just downloads it.** | Faster deploys, identical builds, instant rollback, and no restarts for docs changes. | Medium |
+| 6 | **Progress page:** calendar heatmaps, course progress bars, and how your O'Reilly backlog is shrinking. | The main thing similar tools (Loop, Beaver Habits, Habitica) do better; seeing progress motivates. | Medium |
+| 7 | **Close the learning loop:** after ✓ Watched, ask for 1–3 takeaways and turn the best into FSRS flashcards. | Turns watching into remembering, and finishes the planned flashcard feature. | Medium |
+| 8 | **Calendar feed:** O'Reilly events and planned sessions in your phone's calendar. | Events appear where you plan your day; cheap to build from data we already have. | Small |
+| 9 | **Adaptive nudges:** track which prompts you answer and when, and let the Sunday summary suggest better times. | Fewer ignored prompts, still explainable rules. | Medium |
+| 10 | **Tighten trust:** a private repo with a read-only key for the NAS (or deploy only signed releases), and chat histories out of the public repo. | Whoever controls GitHub `main` effectively controls the NAS. | Small |
+
+I'd do 1–4 next. They're all small, and together they make every later change safer.
+
+**Still waiting on you:**
+- Set the times for the 13 and 15 October events.
+- Create the new Gmail address and its app password (for the email feature).
+- Answer the Claude API question for the Radar summary.
+
+## You · 14:00
+
+<task-notification>
+<task-id>bkbu0ih6c</task-id>
+<tool-use-id>toolu_01T1hNeF5AmQH1dFygUmmQqF</tool-use-id>
+<output-file>C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\bkbu0ih6c.output</output-file>
+<status>completed</status>
+<summary>Background command "Watch NAS for deploy of 8a282ee" completed (exit code 0)</summary>
+</task-notification>
+
+<details><summary>Tool calls</summary>
+
+- *Read*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\bkbu0ih6c.output
+
+</details>
+
+## Claude · 14:00
+
+The 14:00 run deployed `8a282ee` (healthy and polling at 14:00:33), so the LEDs and start times are live. It's also the first deploy run by the new version of the update script, which worked as expected.
+
+| Where | Version |
+|---|---|
+| Your PC | `8a282ee`, nothing uncommitted |
+| GitHub | `8a282ee` |
+| NAS | `8a282ee`, healthy and polling |
+
+Expect one "stopped unexpectedly" email for 14:00, from this deploy's restart.
+
+**Try it:**
+- **O'Reilly page** (http://192.168.0.198:8080/admin/oreilly): check the LED legend and the two LEDs per row, with no strike-through. Then set the times for *Agent Memory* (13 Oct) and *Building Organizational Intelligence* (15 Oct) using the date/time boxes and **Set**.
+- **Telegram:** in `/oreilly`, the lists should start with LED pairs such as 🟡⚪ or 🟢⚪.
+
+**Still waiting on you:**
+- Event times for 13 and 15 October.
+- The new Gmail address and its app password.
+- Yes or no on the Claude API for the Radar summary.
+- Which of the top-ten items to start with. I'd suggest 1–4.
+
+## You · 14:56
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   - **Day 1 (4 Oct 2026):** build "la-vie", a personal daily-life service on a Synology DS220+ NAS (DSM, Docker/Container Manager) with a Telegram bot. It prompts across four areas: movement routines, attention/focus, learning paths and hobbies.
+     - Set up GitHub (repo yotta-prime/la-vie_db, public), with auto-deploy to the NAS via git pull.
+     - Secure the .env, add an admin page, restyle it with the "Industry" design (package supplied locally), keep the docs updated, and sync local, GitHub and NAS.
+   - **Day 2 (12 Oct), checks the user asked for:**
+     - Steps 1–4: git pull, run the tests, check NAS /health and the schedule, check the admin page, help diagnose Friday's 06:30 outage.
+     - At the end: a summary, memory updates, and the chat history "as usual".
+     - Asked in passing: the admin page link in the README.
+   - **Day 2, the O'Reilly import:** take the O'Reilly events file (C:\Users\dbarb\Projects\learning paths\oreilly_events_06-Oct-26.md) and turn it into learning paths, courses and lessons, prompting for each allocation before committing. Then "use the file I supplied" for the recording links (the personal tracking links).
+   - **Day 2, docs:** "document all of this in updated readme, specification documents, and sync all".
+   - **Five-item request:**
+     1. Open the O'Reilly learning plans from Telegram.
+     2. A page that views courses and recordings like the md file.
+     3. The NAS checks email and updates the list and learning plans.
+     4. Clearly separate (a) pending, (b) attended with recordings, (c) planned but not attended, must watch. Checkboxes on the page, plus Telegram confirmations for each.
+     5. A deep analysis of the stack against similar projects, with a top ten.
+   - **Latest:** add times for planned events. Don't strike through watched rows; show status LEDs instead (attended or not, AND watched or not). Show the top ten in chat.
+
+2. Key Technical Concepts:
+   - **App stack:** Python 3.12, FastAPI with lifespan, python-telegram-bot 22.8 (long polling, timeout=5), APScheduler 3 (AsyncIOScheduler), SQLAlchemy 2 with SQLite WAL, a UTCDateTime TypeDecorator, Jinja2 server-rendered admin, pydantic-settings (env_ignore_empty), PyYAML, markdown.
+   - **Docker:** non-root UID 1000, read_only, cap_drop ALL, no-new-privileges, stop_grace_period 30s, a healthcheck, and the APP_VERSION build arg reported by /health.
+   - **Deploy:** DSM Task Scheduler task "lavie update" runs as root every 15 minutes, 00:00–23:45. The command is `/bin/bash /volume1/docker/lavie/repo/deploy/update.sh >> /volume1/docker/lavie/logs/update.log 2>&1`.
+     - update.sh is wrapped in main() so it can replace itself safely mid-run. It writes a heartbeat to logs/last-check, uses a lock directory, and checks the secrets file is mode 600.
+     - It rebuilds and restarts only when app/, content/, Dockerfile, docker-compose.yml, requirements.txt or .dockerignore change. Docs-only commits just `git reset`.
+   - **NAS layout:** /volume1/docker/lavie/{repo,secrets/.env,data,logs}.
+   - **Verifying deploys:** poll http://192.168.0.198:8080/health from the PC for version, polling, last_poll_seconds_ago and jobs (dispatch, watchdog, plan_day, nightly_backup).
+   - **DSM behaviour:** DSM emails "container stopped unexpectedly" for ANY stop it didn't initiate, including compose/CLI deploys.
+   - **Migrations:** hand-written in app/migrations.py, with a pre-migration backup named `lavie.db.pre-v<N>.bak`. Schema is now v4.
+   - **Content import:** content/*.yaml is add-only by stable `key` (source_key). It fills in missing url, date, time, presenters and attendance, and never overwrites.
+   - **Live-event lessons:** fields attendance (registered/waitlisted/attended/missed), event_date, event_time, presenters, attendance_asked_at, recording_notified_at. The derived event_state is pending/awaiting/missed/attended/watched.
+   - **Telegram:**
+     - Confirmation kinds "event_attendance" and "recording_ready" in EVENT_KINDS: they never expire and wait out quiet hours and pauses.
+     - Inline URL buttons via Button(url=...).
+     - The /oreilly views use callback data "o:...".
+   - **Admin auth:** HMAC cookie with SameSite=Strict, derived from ADMIN_PASSWORD plus the bot token. LAN only.
+
+3. Files and Code Sections:
+   - **app/models.py**
+     - Enums: Area, Category, CourseKind, Attendance (REGISTERED, WAITLISTED, ATTENDED, MISSED), PickMethod, PromptStatus, Outcome.
+     - Models: Routine/RoutineStep (url), MicroMove, LearningPath (sequential, source_key), Course (path_id, position, category, kind, url, completed_at, source_key), CourseStep, Flashcard, Hobby, HobbyProject (requires_course/path, unlocked), ScheduleRule (hobby_id XOR course_id), Pause, Prompt, LogEntry (course_id, course_step_id, hobby_project_id).
+     - CourseStep fields:
+       ```python
+       done_at (watched), source_key, event_date: Date, event_time: String(5) "HH:MM", presenters: Text,
+       attendance: _enum(Attendance), attendance_asked_at, recording_notified_at
+       @property is_event -> attendance is not None
+       @property watchable -> not event or (bool(url) and attendance in (ATTENDED, MISSED))
+       @property event_state -> None|"watched"(done_at)|"pending"(registered/waitlisted)|"awaiting"(no url)|attendance.value
+       ```
+   - **app/migrations.py**
+     - _m001_courses, then _m002_source_keys (adds a source_key column and unique index, skipping missing tables).
+     - _m003_events adds the five event columns, then runs `UPDATE course_step SET recording_notified_at=CURRENT_TIMESTAMP WHERE url IS NOT NULL`.
+     - _m004_event_time adds event_time if it's absent (checked with PRAGMA table_info).
+     - MIGRATIONS goes up to 4.
+   - **app/content.py:** import_file(db, file) returns counts {paths, courses, lessons, links}.
+     - _course() creates courses and lessons with `recording_notified_at=utcnow() if url`.
+     - For existing lessons it fills in url, then the _event_fields values (event_date, event_time via _hhmm, presenters, attendance) only where they're None.
+     - _hhmm also accepts the base-60 int that YAML produces for an unquoted 17:00.
+     - import_content(db) is called in main lifespan after seed_settings.
+   - **content/oreilly.yaml**
+     - Paths:
+       - Agentic AI engineering: Agentic coding practice (9 lessons), Building & orchestrating agents (10), LLM & prompting foundations (6).
+       - Software architecture: Architecture in the AI era (7).
+       - Engineering leadership & organisation: Engineering leadership (5), AI & the organisation (5), Project delivery tools (2).
+     - Individual courses: AI & cybersecurity (4), Data (3), Linux administration (1).
+     - All professional; paths are sequential: false. 52 lessons from 53 events; Antigravity's two runs are merged into one lesson.
+     - Lessons are newest first, with upcoming events last.
+     - 43 lessons have urls (the personal click.et.oreilly.com links, or learning.oreilly.com for older events).
+     - Each lesson has date, presenters and attendance: 48 attended, 3 registered (exam prep 8 Oct, agent memory 13 Oct, org intelligence 15 Oct), 1 waitlisted (Katas 2026, no date).
+   - **content/oreilly_radar.md:** page 2 of the user's file (the Radar summary), rendered on the admin O'Reilly page.
+   - **app/selection.py**
+     - next_step(course) prefers lessons that are missed and watchable, then the first watchable undone lesson.
+     - only_waiting(course) is used in eligible_courses to skip courses whose unfinished lessons are all events that can't be watched yet.
+   - **app/engine.py**
+     - Button(label, data="", url=None) and EVENT_KINDS.
+     - due() calls _queue_event_prompts(s, now), which queues an attendance prompt the day after a registered or waitlisted event, and a recording_ready prompt when there's a url, attendance is attended or missed, the lesson isn't done, and recording_notified_at is None.
+     - _event_line shows the date and time and the presenters. _watch_buttons builds the url button and "p:{id}:watched".
+     - _event_message / _event_action handle attended, missed and watched. watched logs a LogEntry and calls _complete_step.
+     - The learning prompt text explains "You missed this live… watch the recording" or "Review: you attended on …".
+     - oreilly(data, now) delegates to app.oreilly.view.
+     - complete_course() is a module-level function.
+   - **app/oreilly.py:** the /oreilly views.
+     - Functions: home, listing (watch/review/upcoming/awaiting, LIST_LIMIT 12), paths, course, step, change(s, sid, action, now), view(s, data, now).
+     - The LED helper:
+       ```python
+       ATT_LED = {ATTENDED:"🟢", MISSED:"🔴", REGISTERED:"🟡", WAITLISTED:"🟡"}
+       def leds(st): return ATT_LED[st.attendance] + ("🟢" if st.done_at else "⚪")
+       _date includes event_time; _short = f"{leds(st)} {_date(st)} · {title}" (truncated at 34 characters)
+       ```
+     - Marking a lesson watched completes the course when every lesson is done.
+   - **app/bot.py**
+     - COMMANDS includes oreilly. A CommandHandler("oreilly") sends home().
+     - The callback handles kind "o" by editing the message in place.
+     - _markup supports url buttons.
+     - The startup message is "la-vie started, version <code>…</code>".
+   - **app/admin/routes.py**
+     - GET /admin/oreilly works out pending, awaiting, to_watch and the recorded rows numbered by year, plus totals and the Radar HTML.
+     - POST /admin/oreilly/{sid} actions: registered, waitlisted, attended, missed (sets attendance_asked_at, and recording_notified_at if there's a url); watched toggles done_at; url sets the link; when sets the date and time ("Time must be HH:MM." on a bad value).
+   - **app/admin/templates/oreilly.html:** sections Planned/Registered (with date/time inputs on pending rows), To watch (missed live), Recording not yet issued (with a paste-link field), the yearly tables, totals, notes and the Radar summary.
+     - A leds(st) macro with CSS classes led-attended/led-missed/led-registered/led-waitlisted/led-on/led-off, and a legend at the top.
+     - No strike-through anywhere.
+     - when() shows the date, with the time under it.
+   - **app/admin/templates/base.html:** the Industry theme (Barlow fonts, steel accent). The nav includes the O'Reilly tab.
+   - **deploy/update.sh:** described in section 2 above.
+   - **docs/:**
+     - SPEC.md: live-event lessons, the O'Reilly page, /oreilly, reliability, schema v4, the implementation status table, the LEDs and times paragraph.
+     - DEPLOY.md: steps 1–8, Day to day (verifying deploys, content updates, the "stopped unexpectedly" explanation), crond restart troubleshooting.
+     - REVIEW-2026-10.md: the analysis, comparisons, 8 risks and the top ten.
+     - chat-history/2026-10-04_la-vie-build-session.md: covers 4 and 12 Oct up to the docs commit.
+     - design/industry/: the theme reference files.
+   - **README.md:** admin page link (http://192.168.0.198:8080/admin), O'Reilly tab, learning content from files with the format, Telegram commands including /oreilly, the local .env test note, the deploy summary, and a link to the review.
+   - **tests:** test_app, test_models, test_engine, test_admin, test_bot (from the cloud session), test_content, test_events, test_oreilly_telegram. **65 pass** with `$env:TELEGRAM_OWNER_CHAT_ID="1"` set.
+   - **Scratchpad scripts** in C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\scratchpad\:
+     - export_chat.py, which converts the session jsonl into the chat-history markdown with redaction and day headings. Usage: `python export_chat.py <jsonl> docs\chat-history\2026-10-04_la-vie-build-session.md`. The jsonl is C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac.jsonl.
+     - add_links.py and add_events.py.
+
+4. Errors and fixes:
+   - **5 failures in test_bot.py:** the local .env has `TELEGRAM_OWNER_CHAT_ID=lavie_daily_bot`. Running with `$env:TELEGRAM_OWNER_CHAT_ID="1"` proved the code is fine. A permanent fix is deferred to the user's decision.
+   - **v0 → v2 migration:** migration 2 tried to alter tables that migration 1 had dropped. Fixed by skipping tables that don't exist yet. The backup name changed to pre-v{LATEST}, and the test was updated.
+   - **v1 migration test:** had to drop the newer columns to simulate a real v1 database, and now expects LATEST 4 and the pre-v4 backup.
+   - **add_events.py:** the AST lookup crashed on a tuple target. Fixed with an isinstance check. The flush-on-blank-line logic was also corrected.
+   - **Windows strftime:** `%-d` isn't supported, so the template uses event_date.day instead.
+   - **Radar heading test:** the markdown library renders the apostrophe differently, so the test now checks for "Radar Newsletter Summary".
+   - **BOM:** PowerShell Set-Content added a BOM. Files are now rewritten with UTF8Encoding($false).
+   - **"Stopped unexpectedly" emails, my wrong diagnosis:** I'd earlier blamed only the 10-second kill. Correction: DSM flags every stop it didn't initiate. Fixed by restricting restarts to app changes; the recommended full fix is turning off the DSM notification once the heartbeat is set up. Memory was updated with the correction.
+   - **Apparent 12:15 deploy miss:** the commit was pushed at 12:16, after that run. The schedule was fine.
+   - **User feedback:**
+     - Links: they want the personal links from their file used.
+     - Rows: no strike-through; use LEDs.
+     - They want times on planned events.
+     - They value the recaps and independent checks.
+
+5. Problem Solving:
+   - **Deploy chain now works end to end.** Every push has been confirmed by polling /health. Today's versions: 76c2ad6, 8cc240d, 3f06316, 4f91b9f, de079c5, 0babe52, fee4548, 71644af, 8a282ee, with the last deployed at 14:00:33.
+   - **Friday's outage:** it was the user's network extender being off. The step 4 log check is still pending.
+   - **Still open:**
+     - the email importer design (a Gmail filter forwarding O'Reilly mail to a dedicated new Gmail inbox, read via IMAP with an app password)
+     - the Radar refresh, which needs an AI step (Claude API), awaiting the user's yes or no
+
+6. All user messages:
+   - Day 1 messages are summarised in earlier context: the interview answers, deploy and setup steps, the Industry styling, the "Run once" check, and "no, let's stick with root" for the deploy task user.
+   - "SSH is disabled on DSM. Enable 2FA on GH?"
+   - "GH 2FA enabled. _la vie task deleted"
+   - "I'm getting an event in DSM - Container lavie stopped unexpectedly - please check this?"
+   - "time on event is 20:30:45"
+   - "thanks for the check/double check and always worth reminding me what's going on at each iteration..."
+   - "Re: firewall and ports - I have a *lot* of ports"
+   - "I'm going to hold off on the firewall item until tomorrow, as always, add a memory to svae chat history and sync all (locally, GH and include in deploy package). Thanks"
+   - (12 Oct) "re this project, please provide admin access details"
+   - "❯ rfe this project", then "ignore that"
+   - The long pasted message: back home after Friday's silent outage (network extender off from about 06:30); three cloud commits (f3fae65 watchdog, e5c9c76 /health command, 76c2ad6 startup message and HEARTBEAT_URL). "Today I only want to check that the update came through and that the admin page works. Leave hardening (firewall, healthchecks.io, Hyper Backup, remote access) for another day. Please work through these one at a time, recapping and checking each result yourself where you can:"
+     1. git pull, confirm 76c2ad6, no uncommitted changes, tests pass.
+     2. NAS /health and logs/last-check; the user confirms the "la-vie started" message and the /health reply in Telegram.
+     3. Admin page: sign in, every page loads, a settings change saves and shows in today's plan.
+     4. Friday's cause in DSM: Container Manager log and Log Center around 06:30.
+     - "At the end, give me a short summary of where things stand, save anything worth keeping to memory, and update the chat history as usual."
+   - "link to the admin page, and make sure this is included in the readme"
+   - "take my o'reilly events file at C:\Users\dbarb\Projects\learning paths, and update the learning courses and paths to include items on the file - prompt me for each allocation before committing to the repo"
+   - Answers via AskUserQuestion: import file in repo; event = lesson; queue attended events for review; generic link (later overridden). Approved the structure, newest first, and courses 1–10 with no changes.
+   - "The linke provided for the learning items and recordings are not inclkuded"
+   - "Use the file I supplied", after rejecting the AskUserQuestion about the link options.
+   - "document all of this in updated readme, specification documents, and sync all please (locally, gh and nas)"
+   - "Next (1) I want to separately open the o'reilly learning plans fromn telegram. (2) Also I'd like the ability to view the courses and recordings in a manner identical to the file oreilly_events_06-Oct-26.md, on a separate page; (3) I'd also like the nas to check my e-mail and update this list and the learnign plans; (4) I also need to clearly de-lineate between (a) pendikng course (b) courses completed with recordings (c) course that were planned, I didn't attend but I need to watch teh recordings. Will need check boxes += telegram confirmations for each scenario (5) Deep analysis of this stack and iot's design, compared with similar projects and recommed a top ten list of improvements"
+   - Answers: attended events stay queued for review; Gmail filter plus a separate inbox; events page in the admin site; events plus the Radar summary.
+   - "I'm going to add another gmail address - quick link. Also the Container stopped unexpectedly mails have returned to haunt me..."
+   - "Need to add times for planned events, also if I watched a reciording it got lined-out i the list -I don't want that I just need a status LED to so that I can review (attended, or not AND watched recording, or not); also let me see the top ten recos please here..."
+
+   Security and handling constraints to keep:
+   - Don't paste passwords or app passwords into chat. Secrets go only into /volume1/docker/lavie/secrets/.env via root commands. Chat-history exports must redact secrets.
+   - Stage files by name; don't use `git add -A`, which published debug/ by mistake.
+   - The repo is public. The user explicitly chose to publish the personal O'Reilly recording links; don't re-raise it.
+   - SSH on the NAS is normally off.
+   - Deploys run as root from main.
+
+7. Pending Tasks:
+   - **Item 3, email importer:** waiting on the user to create the new Gmail address (signup https://accounts.google.com/signup), turn on 2FA and create an app password at https://myaccount.google.com/apppasswords. Then give them the root command to add it to the secrets, the Gmail forwarding filter, and build the IMAP importer, which updates events, adds lessons, fills recording links, and asks for allocation in Telegram.
+   - **Claude API for the Radar summary:** unanswered.
+   - **Event times:** the user needs to set times for the 13 and 15 October events (and the Katas when it gets a date) on the O'Reilly page.
+   - **User verifications still open:**
+     - whether the "Did you attend? Claude Certified Associate Exam Prep" message arrived
+     - /oreilly in Telegram, the O'Reilly tab and the LEDs
+     - the Telegram /health reply
+     - step 3: the admin settings change showing up in today's plan
+     - step 4: the Friday 06:30 logs
+   - **Step 1 fixes, still the user's decision:** the stale local .env chat ID, and isolating the tests from .env.
+   - **Deferred hardening:** firewall (two rules for 8080, check the router first), Hyper Backup, the healthchecks.io heartbeat, then turning off DSM's "stopped unexpectedly" notification, and the debug/ history decision.
+   - **Top ten recommendations:** 1–4 recommended next (CI test gate, pinned dependencies, deploy alerts and heartbeat, off-NAS backups).
+   - **End of session:** update the chat history (re-run export_chat.py), save memory, and confirm local, GitHub and NAS are in sync. Also check that the next docs-only commit logs "container not restarted" and sends no email.
+
+8. Current Work:
+   - The last task was the user's latest request: event times, LEDs instead of strike-through, and the top ten in chat.
+   - I implemented schema v4 (event_time), the importer time handling, the admin "when" action with date/time inputs on pending rows, LEDs on the page with a legend and no `done` class, the Telegram LEDs and times, and the time in confirmation lines. I updated SPEC.md and the tests (65 pass).
+   - I committed and pushed 8a282ee at 13:54:55, and presented the top ten table in chat.
+   - The background watcher then confirmed: "14:00:33 NAS deployed 8a282ee; status=ok polling=True".
+   - **State:** local, GitHub and NAS are all on 8a282ee. That deploy restarted the container, so the user will get one more "stopped unexpectedly" email.
+
+9. Optional Next Step:
+   - Report the confirmed deploy to the user: "14:00:33 NAS deployed 8a282ee; status=ok polling=True". Local, GitHub and NAS are all on 8a282ee.
+   - Remind them what to check: the LEDs on http://192.168.0.198:8080/admin/oreilly, setting times for 13 and 15 Oct, and /oreilly in Telegram.
+   - Restate the outstanding inputs: the new Gmail address and app password for item 3, and the Claude API yes or no for the Radar summary.
+   - No new work should begin until the user responds.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+## You · 17:37
+
+With respec to the telegram LED pairs, preference is for Orange/Grey over Red/Grey. Reserve red only for time-bound items which we'll configure later...
+
+<details><summary>Tool calls</summary>
+
+- *Grep*: 🔴|led-missed|⚪|red
+- *Read*: app\admin\templates\oreilly.html
+- *Read*: app\oreilly.py
+- *PowerShell*: Swap red LED for orange, grey off-LED, update spec
+- *PowerShell*: Check SPEC.md encoding and history
+- *Grep*: two status LEDs
+
+</details>
+
+## Claude · 17:37
+
+I've switched the red LED to orange. Now I'm fixing a garbled-character problem I found in SPEC.md.
+
+<details><summary>Tool calls</summary>
+
+- *Read*: docs\SPEC.md
+- *PowerShell*: Repair SPEC.md double-encoding, scan other files
+
+</details>
+
+SPEC.md was the only garbled file; my PowerShell edit in the last commit had double-encoded it. Next I'll add a test for orange and run the suite.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: tests\test_oreilly_telegram.py
+- *PowerShell*: Run tests and check diff scope
+- *PowerShell*: Find the project virtualenv
+- *PowerShell*: Run tests in venv
+- *PowerShell*: Commit and push
+
+</details>
+
+Pushed. I'm now waiting for the NAS to pick up the change on its 17:45 run.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Poll NAS /health for the new version
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\status-colours.md
+- *Edit*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\MEMORY.md
+
+</details>
+
+Missed events now show orange instead of red, in Telegram and on the admin page. Red is free for the time-bound items you'll set up later. All 65 tests pass, and the change is pushed to GitHub as `6f2b5bc`.
+
+**Telegram:** 🟢 attended, 🟠 missed, 🟡 registered, then 🟢 watched or ⚪ not watched. The key on the `/oreilly` home screen matches.
+
+**Admin page:** I made the same change there. Missed is now an orange dot, and the "not watched" dot is solid grey instead of an empty ring. I also made the registered dot more yellow so it doesn't look like the new orange.
+
+**Garbled spec:** my edit in the last commit had scrambled the dashes, emoji and other special characters across `docs/SPEC.md`. This commit restores them. I checked the other project files and none were affected.
+
+I've saved the colour rule to memory: red only for time-bound items, orange for missed, grey for not yet done.
+
+The NAS hasn't deployed `6f2b5bc` yet; I expect it on the 17:45 run. I'm checking its health page and will confirm once it's live. Because this changes the app, the restart will send another "stopped unexpectedly" email.
+
+## You · 17:42
+
+Thank you. Now, the plan: (1) let's work on the top ten improvements. (2) Outstanding items from today (3) the nas-scan repo deployment and run (vulnerability scan)
+
+<details><summary>Tool calls</summary>
+
+- *Read*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\b3sp95pjd.output
+- *Grep*: ^\| *\d+ *\||^## |^### 
+- *PowerShell*: Look for the nas-scan repo
+- *PowerShell*: Search GitHub and disk for nas-scan
+- *PowerShell*: List nas-scan repo contents and commits
+- *PowerShell*: Clone nas-scan locally and list files
+- *Read*: C:\Users\dbarb\Projects\nas-scan\README.md
+- *Read*: C:\Users\dbarb\Projects\nas-scan\docs\SETUP.md
+- *Read*: C:\Users\dbarb\Projects\nas-scan\deploy\install.sh
+- *Read*: C:\Users\dbarb\Projects\nas-scan\deploy\scan.sh
+- *Read*: C:\Users\dbarb\Projects\nas-scan\.env.example
+- *Read*: C:\Users\dbarb\Projects\nas-scan\Dockerfile
+- *Read*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\b3sp95pjd.output
+- *Read*: C:\Users\dbarb\Projects\nas-scan\.github\workflows\test.yml
+- *Read*: deploy\update.sh
+- *PowerShell*: Inspect la-vie CI/deps setup
+- *PowerShell*: Check NAS health and test config
+
+</details>
+
+## Claude · 17:43
+
+The NAS is still on `8a282ee`, so the 17:45 run didn't deploy. Checking why.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check time and NAS update logs via share
+
+</details>
+
+It's only 17:43, so the 17:45 run hasn't happened yet. My earlier watcher must have stopped before then, so I'm restarting it and moving on.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Poll NAS /health for 6f2b5bc
+
+</details>
+
+Starting improvement #1. First I'm stopping the tests from reading your local `.env`, which is what caused the 5 test_bot failures.
+
+<details><summary>Tool calls</summary>
+
+- *Write*: tests\conftest.py
+- *PowerShell*: Run tests without the env override
+- *Write*: .github\workflows\test.yml
+- *Edit*: deploy\update.sh
+- *PowerShell*: Check compose ports and script syntax
+- *PowerShell*: Syntax-check update.sh with Git's sh
+
+</details>
+
+There's no shell on this PC to check the script, so I'll have GitHub check it: a `shellcheck` step in the same workflow.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: .github\workflows\test.yml
+- *Edit*: deploy\update.sh
+- *PowerShell*: Check line-ending handling for update.sh
+
+</details>
+
+Line endings are safe. Next I'm updating the header comment in `update.sh`, then pushing to watch GitHub's first test run.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: deploy\update.sh
+- *PowerShell*: Commit and push CI gate
+- *PowerShell*: List GitHub Actions runs
+- *Read*: C:\Users\dbarb\AppData\Local\Temp\claude\C--Users-dbarb-Projects-daily-life\ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac\tasks\bjggbkrit.output
+- *PowerShell*: Wait for the first CI run
+
+</details>
+
+The first GitHub test run passed, including the shellcheck step. Now I'm checking that the exact GitHub query the NAS will make returns "success".
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Test the GitHub API query used by update.sh
+
+</details>
+
+The NAS's check will work: GitHub returns `"conclusion":"success"` for the new commit, and the script's pattern accepts it.
+
+Moving on to #2, reproducible builds (pinned versions).
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check available locking tools
+- *Read*: Dockerfile
+- *PowerShell*: Lock deps with uv (universal) and fetch base image digest
+- *PowerShell*: Install locked versions locally and run tests
+
+</details>
+
+Tests pass on the pinned versions. Next I'm wiring the pins into the Dockerfile and dev requirements and adding Dependabot.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Write requirements.in header, dev pins, digest-pinned Dockerfile
+- *Write*: .github\dependabot.yml
+- *PowerShell*: Commit and push reproducible-build changes
+- *PowerShell*: Watch CI run and check NAS deploy
+- *Grep*: heartbeat
+- *Read*: docs\DEPLOY.md
+
+</details>
+
+Steps 3 (healthchecks.io) and 4 (Hyper Backup) need you in a browser and DSM. Before the hand-over I'm updating the docs for CI and the deploy alerts.
+
+<details><summary>Tool calls</summary>
+
+- *Grep*: \.env|pytest|test
+- *Grep*: CI|Reproducible|lock|Dependabot|^\| (Implementation|Outside)|^## Implementation
+- *Read*: README.md
+- *Read*: docs\SPEC.md
+- *PowerShell*: Update README, SPEC, DEPLOY for CI and pinning
+- *PowerShell*: Check which replacements applied
+- *Edit*: README.md
+- *PowerShell*: Verify DEPLOY edit, commit docs
+
+</details>
+
+The CI gate, pinned versions and doc updates are all pushed. Now part (3), nas-scan: I'm running its tests and reviewing the code before it goes on the NAS.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Set up nas-scan venv and run its tests
+
+</details>
+
+All 14 tests pass. The codebase is small (about 460 lines), so I'm reading all of it before it runs as root on your NAS.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Print nas-scan source for review
+- *ToolSearch*
+- *WebSearch*: Trivy latest release version 2026 aquasec/trivy compromised supply chain safe version
+- *PowerShell*: Get latest Trivy release and cross-check image digests
+
+</details>
+
+Docker Hub and GitHub's registry agree on the Trivy 0.75.0 image digest. Now confirming 0.75.0 is a real, current release.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: List recent Trivy releases
+- *Read*: docs\DEPLOY.md
+- *PowerShell*: Fix encoding, pin Trivy/base image/deps in nas-scan, run tests
+
+</details>
+
+My .NET file calls resolved paths against the la-vie folder instead of nas-scan. Checking what that changed in la-vie and restoring it.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check la-vie working tree for accidental changes
+- *PowerShell*: Restore the two accidentally overwritten la-vie files
+
+</details>
+
+la-vie is restored and clean; nothing was committed. Redoing the nas-scan edits with full paths.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Apply nas-scan edits with absolute paths
+
+</details>
+
+The two find-and-replace edits didn't match because the clone uses Windows line endings. I'll use the editor instead.
+
+<details><summary>Tool calls</summary>
+
+- *Read*: C:\Users\dbarb\Projects\nas-scan\nasscan\host.py
+- *Read*: C:\Users\dbarb\Projects\nas-scan\.gitignore
+- *Grep*: disable 'admin'
+
+</details>
+
+On closer look, host.py was fine: it was only the PowerShell display that looked garbled. Now the Dockerfile and `.gitignore`.
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\Dockerfile
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\.gitignore
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\deploy\scan.sh
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\deploy\scan.sh
+- *Write*: C:\Users\dbarb\Projects\nas-scan\.github\workflows\test.yml
+- *Write*: C:\Users\dbarb\Projects\nas-scan\.github\dependabot.yml
+- *PowerShell*: Check nas-scan line-ending config
+- *Write*: C:\Users\dbarb\Projects\nas-scan\.gitattributes
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\docs\SETUP.md
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\docs\SETUP.md
+- *PowerShell*: Test, commit and push nas-scan changes
+
+</details>
+
+The new clone has no git identity, so I'm copying the one la-vie uses (your GitHub noreply address).
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Set identity, commit and push nas-scan
+- *PowerShell*: Watch nas-scan CI; check la-vie deploy
+- *PowerShell*: Check NAS update state after 18:00
+
+</details>
+
+It's only 17:51. I'll watch for the 18:00 run in the background.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Watch for the 18:00 gated deploy
+
+</details>
+
+I've finished the parts I can do from here: top-ten items 1 and 2, half of 3, and nas-scan is reviewed and ready to deploy. The rest needs you in DSM or a browser. GitHub's tests passed for la-vie and nas-scan, and the 17:45 run put `127d4cb` on the NAS. The 18:00 run will be the first deploy through the new test check, and I'll confirm it when it lands.
+
+## 1. Top ten
+
+| # | Improvement | Status |
+|---|---|---|
+| 1 | **Tests before deploy** | ✅ Done. GitHub runs the tests on every push, and the NAS deploys only commits that passed. A failed run triggers one Telegram message, and the NAS stays on the old version. The tests no longer read your local `.env`, so those 5 bot test failures are fixed. |
+| 2 | **Pinned versions** | ✅ Done. Every package is fixed to an exact version (`requirements.in` lists them, `requirements.txt` has the exact pins), and the base image is pinned too. Dependabot will open monthly update PRs, which GitHub tests before you merge. |
+| 3 | **Deploy alerts and heartbeat** | ⚠️ Alerts done: a failed build, or a new version that doesn't answer `/health`, sends a Telegram message. The outside heartbeat needs you to sign up at healthchecks.io (steps in DEPLOY.md step 8). |
+| 4 | **Off-NAS backups** | ⬜ You: DSM → Hyper Backup → back up `docker/lavie/data/backups` to a USB disk or Synology C2, and save the `.env` values in your password manager. |
+| 5–10 | | Next. I'd start with #5, building images on GitHub, which builds on 1 and 2. |
+
+## 3. nas-scan: reviewed and ready
+
+The code is small and sound, and the scanner container runs with no root or extra privileges. I pushed `ae3fe39` with these fixes:
+- **Trivy was pinned to 0.56.2 (2024).** Trivy's release tags were hijacked in March 2026 ([advisory](https://github.com/aquasecurity/trivy/security/advisories/GHSA-69fq-xp46-6x23), [StepSecurity](https://www.stepsecurity.io/blog/trivy-compromised-a-second-time---malicious-v0-69-4-release)), and every release from 0.70.0 on is confirmed safe. It's now pinned to **0.75.0** (latest, 1 Oct) by its image fingerprint, which I checked matches on both Docker Hub and GitHub's own registry.
+- **Python packages are pinned** to exact versions, and Dependabot is added.
+- **The NAS updates only to commits that passed tests,** the same check as la-vie.
+- **The setup guide assumed a private repo with an SSH deploy key,** but the repo is public. It now uses a plain HTTPS clone.
+
+**Your part:** turn SSH on temporarily, then follow nas-scan's `docs/SETUP.md`, steps 2, 4 and 5. Create the weekly task and click **Run** for the first scan, which takes 10–20 minutes, rather than running it over SSH. Then switch SSH off.
+
+**Decision needed: who sends the scan email?**
+- I'd use the new dedicated Gmail account (the one for the O'Reilly inbox), with its own app password named `nas-scan`, sending to your main Gmail address.
+- Enter the app password without spaces, and type it only into the SSH session, never into this chat.
+
+If you do the healthchecks.io signup first, add `HEARTBEAT_URL` in the same SSH session.
+
+## 2. Still outstanding from today
+- **Times for 13 Oct (tomorrow) and 15 Oct events:** set them on the O'Reilly page so the reminders go out at the right time.
+- **New Gmail address and app password:** needed for the O'Reilly email importer.
+- **Yes or no on the Claude API** for refreshing the Radar summary.
+- **Checks only you can do:**
+  - Did the "Did you attend? Exam Prep" message arrive?
+  - Do `/oreilly` and `/health` work in Telegram?
+  - Does a settings change show up in today's plan?
+  - What does Friday's DSM log show around 06:30?
+- **Later:**
+  - firewall
+  - turning off DSM's "stopped unexpectedly" email once the heartbeat works
+  - the `debug/` folder in the repo history
+
+The 18:00 deploy will restart the container, so expect one more "stopped unexpectedly" email.
+
+## You · 17:52
+
+```
+New project: nas-scan, a weekly vulnerability scan of my Synology NAS that emails me the results.
+It's at https://github.com/yotta-prime/nas-scan (private), built in a cloud session.
+Please clone it to my Projects folder and read README.md and docs/SETUP.md first.
+
+Then take me through docs/SETUP.md on the NAS (192.168.0.198), one step at a time,
+recapping and checking each result yourself where you can:
+1. I'll enable SSH in DSM (Control Panel → Terminal & SNMP) for this session only.
+2. Create the read-only deploy key on the NAS. I'll add it to GitHub under nas-scan →
+   Settings → Deploy keys, with write access off.
+3. Clone the repo on the NAS to /volume1/docker/nas-scan/repo using that key.
+4. I'll create a Gmail app password called nas-scan. I'll type all secrets directly into the
+   NAS terminal myself, so don't ask me to paste them into this chat.
+5. Run deploy/install.sh, create secrets/.env from .env.example (NAS_IP=192.168.0.198,
+   SMTP_USER, SMTP_PASSWORD), re-run install.sh, and check secrets/.env is mode 600, owned by root.
+6. Do a first run of deploy/scan.sh. It can take 10–20 minutes, because it builds the image
+   and downloads Trivy's vulnerability database. Check logs/scan.log, data/reports/,
+   and that I received the email.
+7. Go through the first report with me. Four parts couldn't be tested before now: Trivy,
+   the NVD lookup for DSM, Shodan InternetDB and the synouser admin check. Check each one
+   produced real results and not an "error" finding. If one is broken, fix it in the repo,
+   run the tests (pytest), push, and re-run the scan.
+8. Set EXPECTED_PORTS from the ports I recognise in the report, then re-run once.
+9. Create the weekly DSM Task Scheduler job: Sunday 04:10, user root, with the command from
+   docs/SETUP.md. Do a test run with Run.
+10. Remind me to disable SSH again.
+Save the NAS setup details to memory, and update the chat history at the end as usual.
+```
+
+## Claude · 17:52
+
+Before step 1, one thing doesn't match your plan: **nas-scan is public on GitHub, not private.** `gh repo list` shows it public, and the clone already worked without a key. That matters for steps 2–3. My last push (`ae3fe39`) also changed SETUP.md to clone over HTTPS with no deploy key, and the NAS's "update only to tested commits" check uses GitHub's public API, which only works for public repos.
+
+<details><summary>Tool calls</summary>
+
+- *AskUserQuestion*: nas-scan is currently public. Make it private (as your plan says) or keep it public?
+
+</details>
+
+> **Answers:** "nas-scan is currently public. Make it private (as your plan says) or keep it public?"="Make it private (Recommended)"
+
+I'll make it private and switch the tested-commit check to a branch the NAS can read with the deploy key. First the repo changes, then I'll flip the repo to private.
+
+<details><summary>Tool calls</summary>
+
+- *Write*: C:\Users\dbarb\Projects\nas-scan\.github\workflows\test.yml
+- *Read*: C:\Users\dbarb\Projects\nas-scan\deploy\scan.sh
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\deploy\scan.sh
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\deploy\scan.sh
+- *Edit*: C:\Users\dbarb\Projects\nas-scan\docs\SETUP.md
+- *PowerShell*: Verify GitHub SSH fingerprint, commit and push
+- *PowerShell*: Watch CI and confirm tested branch created
+
+</details>
+
+CI passed and created the `tested` branch at `6c88e5b`. Making the repo private now, as you chose.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Make nas-scan private and verify
+- *PowerShell*: Check la-vie 18:00 deploy status
+
+</details>
+
+nas-scan is now **private**, and the NAS will pull from its `tested` branch using a read-only deploy key. SETUP.md is updated to match (`6c88e5b`). I couldn't run the NAS scripts here, but GitHub's check of them (shellcheck) passed.
+
+## Steps 1–2: SSH and the deploy key
+
+**1.** In DSM, go to **Control Panel → Terminal & SNMP** and tick **Enable SSH service**. Then from a PowerShell window, connect with `ssh <your-dsm-admin>@192.168.0.198`.
+
+**2.** On the NAS, run:
+```sh
+sudo mkdir -p /root/.ssh
+sudo chmod 700 /root/.ssh
+sudo ssh-keygen -t ed25519 -f /root/.ssh/nas_scan_deploy -N "" -C nas-scan
+sudo cat /root/.ssh/nas_scan_deploy.pub
+```
+Copy the `ssh-ed25519 AAAA… nas-scan` line. It's the public half, so it's safe to paste here if that's easier. Then on GitHub, open **nas-scan → Settings → Deploy keys → Add deploy key**:
+- Title: `NAS`
+- Key: paste the line
+- **Allow write access: off**
+
+Tell me when it's added. I'll confirm on GitHub that the key is there and read-only, then give you step 3 (the clone).
+
+Separately, la-vie's 18:00 run hasn't happened yet (it's 17:54). I'm still watching for it and will report it alongside your next step.
+
+## You · 17:56
+
+I have to take a break here for an hour. Please: a. save this chat history b. update all documentation c. synchronise everything nas/gh/local d. make so that i can resume later this evening with slash resume and pick up where we left off
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check la-vie 18:00 deploy
+
+</details>
+
+## Claude · 17:56
+
+It's 17:56, so la-vie's 18:00 deploy is still pending. I'll do the docs and memory first and check the deploy last.
+
+<details><summary>Tool calls</summary>
+
+- *Read*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\la-vie-nas-deploy.md
+- *Read*: docs\REVIEW-2026-10.md
+- *Edit*: docs\REVIEW-2026-10.md
+- *Read*: docs\DEPLOY.md
+- *Edit*: docs\DEPLOY.md
+
+</details>
+
+Now the memory updates, including a resume point for tonight.
+
+<details><summary>Tool calls</summary>
+
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\la-vie-nas-deploy.md
+- *Write*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\nas-scan-setup.md
+- *Edit*: C:\Users\dbarb\.claude\projects\C--Users-dbarb-Projects-daily-life\memory\MEMORY.md
+
+</details>

@@ -107,7 +107,9 @@ If the schedule looks right but `last-check` still doesn't move, DSM's cron serv
 ```sh
 sudo synoschedtask --get | grep -A14 'lavie update'   # schedule, next trigger, last run time
 sudo systemctl restart crond
-``` The command uses full paths (`/bin/bash`, `/volume1/...`), following Synology's [Task Scheduler scripting tips](https://kb.synology.com/en-uk/DSM/tutorial/common_mistake_in_task_scheduler_script).
+```
+
+The command uses full paths (`/bin/bash`, `/volume1/...`), following Synology's [Task Scheduler scripting tips](https://kb.synology.com/en-uk/DSM/tutorial/common_mistake_in_task_scheduler_script).
 
 ### 6. Lock down
 
