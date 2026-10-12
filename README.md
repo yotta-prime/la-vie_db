@@ -13,6 +13,7 @@ Personal daily-life service: Telegram prompts for movement, focus, learning path
 
 **http://192.168.0.198:8080/admin** (on the NAS; generally `http://<nas-ip>:8080/admin`)
 
+- **O'Reilly** tab (`/admin/oreilly`): your live events laid out like the events file, with Attended / Missed / Watched controls on every row, plus the Radar newsletter summary.
 - Edit routines and their video links, micro-moves, learning paths, courses and lessons, flashcards, hobbies and projects, dependencies, schedules and settings. The **Today** page shows the day's prompts and can re-plan the rest of the day after a settings change.
 - Reachable from your home network only: keep port 8080 closed on the router.
 - Sign in with `ADMIN_PASSWORD` from the NAS secrets file (`/volume1/docker/lavie/secrets/.env`); the admin page stays locked until it's set. Sign-in lasts 30 days per browser. To set or change the password, see [docs/DEPLOY.md](docs/DEPLOY.md) step 7.
@@ -26,7 +27,8 @@ Besides the admin page, learning paths, courses and lessons can be kept in `cont
 - **`content/oreilly.yaml`**: O'Reilly live events, from `oreilly_events_06-Oct-26.md`: 3 paths, 10 courses, 52 lessons, with recording links. Lessons are newest first, upcoming events last, and all queued for review.
 - **Add-only import.** Each path, course and lesson has a unique `key`. An item is created the first time its key appears; after that, the only change import makes is **filling in a link** the item doesn't have yet. Renames, reordering, ticks and links set in the admin page are never overwritten.
 - **Add an event**: append a lesson with a new `key`, `title`, `detail` and optional `url`, then push. It's added at the end of its course.
-- **Add a recording link later**: add `url:` to that lesson and push; the NAS fills it in.
+- **Add a recording link later**: add `url:` to that lesson and push, or paste it on the admin **O'Reilly** page. Telegram then announces the recording.
+- **Live events** also take `date`, `presenters` and `attendance` (registered / waitlisted / attended / missed). See *Live-event lessons* in [docs/SPEC.md](docs/SPEC.md) for how pending, missed and attended events are handled.
 - **Remove an item**: delete it in the admin page *and* from the file (otherwise it's re-created on the next start).
 
 Format (see the top of `content/oreilly.yaml` and `app/content.py`):
@@ -53,7 +55,7 @@ The repo is public, so anything in `content/` is published.
 
 ## Telegram commands
 
-`/status` (what's left today, pauses, streaks) · `/summary` (this week so far; sent automatically on Sunday evening) · `/focus [min]` · `/log <what> [duration]` · `/pause [area|all] [duration]` · `/resume [area]` · `/health` (version and connection check) · `/help` · `/ping`
+`/oreilly` (O'Reilly events: to watch, review, upcoming, courses; mark attended/missed/watched) · `/status` (what's left today, pauses, streaks) · `/summary` (this week so far; sent automatically on Sunday evening) · `/focus [min]` · `/log <what> [duration]` · `/pause [area|all] [duration]` · `/resume [area]` · `/health` (version and connection check) · `/help` · `/ping`
 
 The bot also sends **"la-vie started, version …"** whenever it starts, e.g. after each deploy.
 

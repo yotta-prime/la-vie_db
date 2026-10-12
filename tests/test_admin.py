@@ -75,9 +75,34 @@ def test_locked_without_password(client, monkeypatch):
 
 def test_all_pages_render(client):
     login(client)
-    for page in ["/admin", "/admin/movement", "/admin/learning", "/admin/hobbies", "/admin/settings", "/"]:
+    for page in ["/admin", "/admin/movement", "/admin/learning", "/admin/oreilly", "/admin/hobbies",
+                 "/admin/settings", "/"]:
         r = client.get(page)
         assert r.status_code == 200, page
+
+
+def test_oreilly_page_and_status_controls(client):
+    login(client)
+    page = client.get("/admin/oreilly").text
+    assert "O&#39;Reilly Live Events" in page or "O'Reilly Live Events" in page
+    for heading in ["Planned / Registered", "To watch", "Recording not yet issued", "2026", "2025", "2024", "2023",
+                    "Radar Newsletter Summary", "Major Themes"]:
+        assert heading in page, heading
+    assert page.count("Watch Recording") == 43
+    assert "Attended: 48 (+5 awaiting recordings)" in page and "Upcoming registered: 3 (+1 waitlisted)" in page
+
+    with db(client).session() as s:
+        exam = s.scalar(select(CourseStep).where(CourseStep.source_key == "oreilly-2026-10-08-claude-exam-prep"))
+        sid = exam.id
+    client.post(f"/admin/oreilly/{sid}", data={"action": "missed"})
+    client.post(f"/admin/oreilly/{sid}", data={"action": "url", "url": "https://example.org/rec"})
+    page = client.get("/admin/oreilly").text
+    assert "Missed: 1 (1 still to watch)" in page
+    client.post(f"/admin/oreilly/{sid}", data={"action": "watched"})
+    with db(client).session() as s:
+        exam = s.get(CourseStep, sid)
+        assert exam.event_state == "watched" and exam.attendance_asked_at is not None
+        assert exam.recording_notified_at is None  # link added here: Telegram will announce it
 
 
 def test_learning_paths_courses_lessons(client):

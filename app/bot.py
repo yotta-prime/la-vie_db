@@ -35,6 +35,7 @@ COMMANDS = [
     ("log", "Log something: /log run 30m"),
     ("pause", "Pause prompts: /pause hobby 2d"),
     ("resume", "Resume prompts: /resume [area]"),
+    ("oreilly", "O'Reilly events: to watch, upcoming, courses"),
     ("health", "Version and connection check"),
     ("help", "What I can do"),
 ]
@@ -44,6 +45,7 @@ HELP = (
     "or reply to a question.\n\n"
     "/status: what's still to come today, pauses, streaks\n"
     "/summary: this week so far (sent automatically on Sunday evening)\n"
+    "/oreilly: O'Reilly events: recordings to watch, upcoming, paths and courses\n"
     "/focus [min]: start a focus block (default 25)\n"
     "/log &lt;what&gt; [duration]: log something, e.g. <code>/log run 30m</code>\n"
     "/pause [area|all] [duration]: e.g. <code>/pause</code>, <code>/pause hobby 2d</code>\n"
@@ -61,7 +63,14 @@ def _markup(buttons: list[list[Button]]) -> InlineKeyboardMarkup | None:
     if not buttons:
         return None
     return InlineKeyboardMarkup(
-        [[InlineKeyboardButton(b.label, callback_data=b.data) for b in row] for row in buttons]
+        [
+            [
+                InlineKeyboardButton(b.label, url=b.url) if b.url
+                else InlineKeyboardButton(b.label, callback_data=b.data)
+                for b in row
+            ]
+            for row in buttons
+        ]
     )
 
 
@@ -139,6 +148,7 @@ class Bot:
             app.add_handler(CommandHandler("help", self._help, filters=owner))
             app.add_handler(CommandHandler("status", self._status, filters=owner))
             app.add_handler(CommandHandler("summary", self._summary, filters=owner))
+            app.add_handler(CommandHandler("oreilly", self._oreilly, filters=owner))
             app.add_handler(CommandHandler("focus", self._focus, filters=owner))
             app.add_handler(CommandHandler("pause", self._pause, filters=owner))
             app.add_handler(CommandHandler("resume", self._resume, filters=owner))
@@ -258,6 +268,10 @@ class Bot:
     async def _summary(self, update: Update, _ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.engine.summary(now_utc()))
 
+    async def _oreilly(self, update: Update, _ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        _, msg = self.engine.oreilly("o:home", now_utc())
+        await update.message.reply_html(msg.text, reply_markup=_markup(msg.buttons))
+
     async def _focus(self, update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(self.engine.start_focus(ctx.args, now_utc()))
 
@@ -285,6 +299,18 @@ class Bot:
             return
         kind, *parts = (query.data or "").split(":")
         now = now_utc()
+
+        if kind == "o":
+            toast, msg = self.engine.oreilly(query.data, now)
+            await query.answer(toast)
+            if msg is not None:
+                try:
+                    await query.edit_message_text(
+                        msg.text, parse_mode=ParseMode.HTML, reply_markup=_markup(msg.buttons)
+                    )
+                except BadRequest as e:  # e.g. "message is not modified"
+                    log.debug("edit failed: %s", e)
+            return
 
         if kind == "l" and len(parts) == 2:
             await query.answer()

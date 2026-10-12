@@ -60,9 +60,26 @@ def _m002_source_keys(cur: sqlite3.Cursor, engine: Engine) -> None:
         cur.execute(f"CREATE UNIQUE INDEX ix_{table}_source_key ON {table} (source_key)")
 
 
+def _m003_events(cur: sqlite3.Cursor, engine: Engine) -> None:
+    """Live-event fields on lessons: date, presenters, attendance, confirmation timestamps."""
+    if not cur.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='course_step'").fetchone():
+        return  # coming from v0: create_all builds course_step with these columns
+    for col, typ in [
+        ("event_date", "DATE"),
+        ("presenters", "TEXT"),
+        ("attendance", "VARCHAR(32)"),
+        ("attendance_asked_at", "DATETIME"),
+        ("recording_notified_at", "DATETIME"),
+    ]:
+        cur.execute(f"ALTER TABLE course_step ADD COLUMN {col} {typ}")
+    # Links already present are known; only links added from now on announce a recording.
+    cur.execute("UPDATE course_step SET recording_notified_at = CURRENT_TIMESTAMP WHERE url IS NOT NULL")
+
+
 MIGRATIONS: list[tuple[int, Callable[[sqlite3.Cursor, Engine], None]]] = [
     (1, _m001_courses),
     (2, _m002_source_keys),
+    (3, _m003_events),
 ]
 LATEST = MIGRATIONS[-1][0]
 

@@ -75,6 +75,15 @@ class CourseKind(str, enum.Enum):
     SRS = "srs"  # spaced-repetition flashcards
 
 
+class Attendance(str, enum.Enum):
+    """For lessons that are live events (e.g. O'Reilly). NULL on ordinary lessons."""
+
+    REGISTERED = "registered"
+    WAITLISTED = "waitlisted"
+    ATTENDED = "attended"
+    MISSED = "missed"
+
+
 class PickMethod(str, enum.Enum):
     ROUND_ROBIN = "round_robin"
     NEGLECT = "neglect"
@@ -210,10 +219,42 @@ class CourseStep(Base):
     title: Mapped[str] = mapped_column(String(200))
     detail: Mapped[str | None] = mapped_column(Text)
     url: Mapped[str | None] = mapped_column(String(500))
-    done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)  # watched / finished
     source_key: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
 
+    # Live events only (NULL for ordinary lessons). `url` holds the recording link.
+    event_date: Mapped[date | None] = mapped_column(Date)
+    presenters: Mapped[str | None] = mapped_column(Text)
+    attendance: Mapped[Attendance | None] = mapped_column(_enum(Attendance))
+    attendance_asked_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    recording_notified_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
     course: Mapped[Course] = relationship(back_populates="steps")
+
+    @property
+    def is_event(self) -> bool:
+        return self.attendance is not None
+
+    @property
+    def watchable(self) -> bool:
+        """Can be offered as a lesson now: ordinary lessons always; events once there's a
+        recording and you've either attended (review) or missed (watch)."""
+        if not self.is_event:
+            return True
+        return bool(self.url) and self.attendance in (Attendance.ATTENDED, Attendance.MISSED)
+
+    @property
+    def event_state(self) -> str | None:
+        """pending / awaiting / missed / attended / watched, for display and filtering."""
+        if not self.is_event:
+            return None
+        if self.done_at:
+            return "watched"
+        if self.attendance in (Attendance.REGISTERED, Attendance.WAITLISTED):
+            return "pending"
+        if not self.url:
+            return "awaiting"
+        return self.attendance.value
 
 
 class Flashcard(Base):

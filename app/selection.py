@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 
 from app.models import (
     Area,
+    Attendance,
     Category,
     Course,
     CourseStep,
@@ -134,6 +135,8 @@ def eligible_courses(s: Session) -> list[Course]:
     ).all()
     out = []
     for c in courses:
+        if only_waiting(c):
+            continue
         p = c.path
         if p is None:
             out.append(c)
@@ -175,7 +178,18 @@ def rank_learning(s: Session, today: date, tz: ZoneInfo, ratio: dict) -> list[Co
 
 
 def next_step(course: Course) -> CourseStep | None:
-    return next((st for st in course.steps if st.done_at is None), None)
+    """The next lesson to offer. Missed live events with a recording come first (they must be
+    watched), then everything else in order. Events still pending or awaiting a recording are
+    never offered."""
+    open_ = [st for st in course.steps if st.done_at is None and st.watchable]
+    missed = [st for st in open_ if st.attendance == Attendance.MISSED]
+    return (missed or open_ or [None])[0]
+
+
+def only_waiting(course: Course) -> bool:
+    """True when every unfinished lesson is a live event that can't be watched yet."""
+    open_ = [st for st in course.steps if st.done_at is None]
+    return bool(open_) and not any(st.watchable for st in open_)
 
 
 # --- hobbies ------------------------------------------------------------------

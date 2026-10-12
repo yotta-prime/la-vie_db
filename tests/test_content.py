@@ -103,7 +103,7 @@ def test_reimport_adds_only_new_and_keeps_admin_edits(db, tmp_path):
         assert c.steps[-1].title == "What's Happening in Data (27 Oct)" and c.steps[-1].position == 3
 
 
-def test_migrates_v1_database(tmp_path):
+def test_migrates_v1_database_to_latest(tmp_path):
     """The NAS is on schema v1: no source_key columns yet."""
     path = tmp_path / "v1.db"
     d = Database(f"sqlite:///{path}")
@@ -113,6 +113,8 @@ def test_migrates_v1_database(tmp_path):
     for table in ("learning_path", "course", "course_step"):
         con.execute(f"DROP INDEX ix_{table}_source_key")
         con.execute(f"ALTER TABLE {table} DROP COLUMN source_key")
+    for col in ("event_date", "presenters", "attendance", "attendance_asked_at", "recording_notified_at"):
+        con.execute(f"ALTER TABLE course_step DROP COLUMN {col}")
     con.execute("UPDATE schema_version SET version = 1")
     con.execute("INSERT INTO course (id, position, name, category, kind, active) "
                 "VALUES (1, 0, 'Mine', 'hobby', 'steps', 1)")
@@ -126,5 +128,5 @@ def test_migrates_v1_database(tmp_path):
         assert s.get(Course, 1).name == "Mine" and s.get(Course, 1).source_key is None
     d.engine.dispose()
     (version,) = sqlite3.connect(path).execute("SELECT version FROM schema_version").fetchone()
-    assert version == LATEST == 2
-    assert (tmp_path / "v1.db.pre-v2.bak").exists()
+    assert version == LATEST == 3
+    assert (tmp_path / "v1.db.pre-v3.bak").exists()

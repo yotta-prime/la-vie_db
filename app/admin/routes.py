@@ -21,6 +21,7 @@ from sqlalchemy import func, select
 from app.config import get_settings
 from app.engine import complete_course
 from app.models import (
+    Attendance,
     Category,
     Course,
     CourseKind,
@@ -601,6 +602,77 @@ async def project_update(request: Request, pid: int):
             p.active = flag(form, "active")
             _apply_requirement(p, txt(form, "requires"))
     return back(f"/admin/hobbies/{hid}#projects")
+
+
+# --- O'Reilly live events -----------------------------------------------------
+
+RADAR_FILE = Path(__file__).resolve().parents[2] / "content" / "oreilly_radar.md"
+
+
+def _radar_html() -> str | None:
+    if not RADAR_FILE.exists():
+        return None
+    import markdown
+
+    return markdown.markdown(RADAR_FILE.read_text(encoding="utf-8"), extensions=["tables"])
+
+
+@router.get("/oreilly")
+async def oreilly(request: Request):
+    """Live events laid out like oreilly_events_06-Oct-26.md, with status controls."""
+    with _db(request).session() as s:
+        events = s.scalars(select(CourseStep).where(CourseStep.attendance.is_not(None))).all()
+        far = date.max
+
+        def newest_first(st):
+            return (-(st.event_date or far).toordinal(), st.title)
+
+        pending = sorted([e for e in events if e.event_state == "pending"],
+                         key=lambda st: (st.event_date or far, st.title))
+        awaiting = sorted([e for e in events if e.event_state == "awaiting"], key=newest_first)
+        to_watch = sorted([e for e in events if e.event_state == "missed"], key=newest_first)
+        recorded = sorted([e for e in events if e.url and e.event_state in ("attended", "missed", "watched")],
+                          key=newest_first)
+        years: dict[int, list] = {}
+        for n, st in enumerate(recorded, 1):
+            years.setdefault(st.event_date.year if st.event_date else 0, []).append((n, st))
+
+        att = [e for e in events if e.attendance == Attendance.ATTENDED]
+        missed = [e for e in events if e.attendance == Attendance.MISSED]
+        totals = {
+            "attended": len(att),
+            "attended_awaiting": sum(1 for e in att if not e.url),
+            "missed": len(missed),
+            "missed_to_watch": sum(1 for e in missed if not e.done_at),
+            "registered": sum(1 for e in events if e.attendance == Attendance.REGISTERED),
+            "waitlisted": sum(1 for e in events if e.attendance == Attendance.WAITLISTED),
+            "watched": sum(1 for e in events if e.done_at),
+            "recorded": len(recorded),
+        }
+        return render(request, "oreilly.html", pending=pending, awaiting=awaiting, to_watch=to_watch,
+                      years=sorted(years.items(), reverse=True), totals=totals, radar=_radar_html())
+
+
+@router.post("/oreilly/{sid}")
+async def oreilly_update(request: Request, sid: int):
+    form = await request.form()
+    action = form.get("action")
+    with _db(request).session() as s:
+        st = get_or_404(s, CourseStep, sid)
+        if action in ("registered", "waitlisted", "attended", "missed"):
+            st.attendance = Attendance(action)
+            if action in ("attended", "missed"):
+                # Answered here, so Telegram doesn't ask again; a recording already present
+                # counts as announced.
+                st.attendance_asked_at = st.attendance_asked_at or datetime.now(timezone.utc)
+                if st.url:
+                    st.recording_notified_at = st.recording_notified_at or datetime.now(timezone.utc)
+        elif action == "watched":
+            st.done_at = None if st.done_at else datetime.now(timezone.utc)
+        elif action == "url":
+            st.url = txt(form, "url")
+        title = st.title
+    return back(f"/admin/oreilly#e{sid}", f"Updated: {title}")
 
 
 # --- settings -----------------------------------------------------------------

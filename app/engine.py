@@ -21,6 +21,7 @@ from app.db import Database
 from app.defaults import DEFAULT_SETTINGS
 from app.models import (
     Area,
+    Attendance,
     Course,
     CourseKind,
     CourseStep,
@@ -39,6 +40,8 @@ from app.reports import weekly_summary
 from app.timeutil import in_quiet_hours, local_day_bounds, local_dt, parse_duration
 
 EXPIRE_AFTER = timedelta(minutes=30)
+# Live-event confirmations: never expire, and wait out quiet hours / pauses instead of being skipped.
+EVENT_KINDS = ("event_attendance", "recording_ready")
 TEXT_REPLY_WINDOW = timedelta(hours=3)
 TEXT_KINDS = ("intention", "distraction")
 OUTCOME_LABELS = {Outcome.DONE: "✓ Done", Outcome.PARTIAL: "◐ Partial", Outcome.SKIP: "✗ Skipped"}
@@ -54,7 +57,8 @@ AREA_ALIASES = {
 @dataclass
 class Button:
     label: str
-    data: str
+    data: str = ""
+    url: str | None = None  # a link button (opens the URL) instead of a callback
 
 
 @dataclass
@@ -186,20 +190,22 @@ class Engine:
         out = []
         with self.db.session() as s:
             cfg = self.settings(s)
+            self._queue_event_prompts(s, now)
             prompts = s.scalars(
                 select(Prompt)
                 .where(Prompt.status == PromptStatus.SCHEDULED, Prompt.scheduled_for <= now)
                 .order_by(Prompt.scheduled_for)
             ).all()
             for p in prompts:
-                if now - p.scheduled_for > EXPIRE_AFTER:
+                held = in_quiet_hours(now, cfg["quiet_hours"], self.tz) or self._paused(s, p.area, now)
+                if p.kind in EVENT_KINDS:
+                    if held:
+                        continue  # stays scheduled; goes out once quiet hours / the pause end
+                elif now - p.scheduled_for > EXPIRE_AFTER:
                     p.status = PromptStatus.EXPIRED
                     continue
                 # Focus blocks were started by you, and the summary isn't a nudge: pauses don't apply.
-                exempt = p.kind in ("focus_end", "weekly_summary")
-                if not exempt and (
-                    in_quiet_hours(now, cfg["quiet_hours"], self.tz) or self._paused(s, p.area, now)
-                ):
+                elif p.kind not in ("focus_end", "weekly_summary") and held:
                     p.status = PromptStatus.SKIPPED
                     continue
                 msg = self._render(s, p, now)
@@ -208,6 +214,33 @@ class Engine:
                     continue
                 out.append((p.id, msg))
         return out
+
+    def _queue_event_prompts(self, s, now: datetime) -> None:
+        """Queue Telegram confirmations for live events (each asked once):
+        - the day after a registered/waitlisted event: did you attend?
+        - when a recording link appears: open it / mark it watched."""
+        today = self.today(now)
+        steps = s.scalars(select(CourseStep).where(CourseStep.attendance.is_not(None))).all()
+        for st in steps:
+            if (
+                st.attendance in (Attendance.REGISTERED, Attendance.WAITLISTED)
+                and st.event_date is not None
+                and st.event_date < today
+                and st.attendance_asked_at is None
+            ):
+                s.add(Prompt(area=Area.LEARNING, kind="event_attendance", scheduled_for=now,
+                             payload={"step_id": st.id}))
+                st.attendance_asked_at = now
+            if (
+                st.url
+                and st.recording_notified_at is None
+                and st.attendance in (Attendance.ATTENDED, Attendance.MISSED)
+                and st.done_at is None
+            ):
+                s.add(Prompt(area=Area.LEARNING, kind="recording_ready", scheduled_for=now,
+                             payload={"step_id": st.id}))
+                st.recording_notified_at = now
+        s.flush()
 
     def mark_sent(self, prompt_id: int, message_id: int | None, now: datetime) -> None:
         with self.db.session() as s:
@@ -290,12 +323,75 @@ class Engine:
             text = self._session_text(s, kind, payload)
             buttons = outcome_buttons(p.id, another=payload["idx"] + 1 < len(payload["candidates"]))
 
+        elif kind in EVENT_KINDS:
+            st = s.get(CourseStep, payload.get("step_id"))
+            if st is None:
+                return None
+            text, buttons = self._event_message(st, kind, p.id)
+
         else:
             raise ValueError(f"unknown prompt kind {kind!r}")
 
         payload["text"] = text
         p.payload = payload
         return Outgoing(text, buttons, force_reply=kind in TEXT_KINDS)
+
+    @staticmethod
+    def _event_line(st: CourseStep) -> str:
+        bits = [f"{st.event_date:%a %d %b %Y}" if st.event_date else None, st.presenters]
+        meta = " · ".join(html.escape(b) for b in bits if b)
+        return f"<b>{html.escape(st.title)}</b>" + (f"\n<i>{meta}</i>" if meta else "")
+
+    @staticmethod
+    def _watch_buttons(st: CourseStep, prompt_id: int) -> list[list[Button]]:
+        row = [Button("▶ Open recording", url=st.url)] if st.url else []
+        row.append(Button("✓ Watched", f"p:{prompt_id}:watched"))
+        return [row]
+
+    def _event_message(self, st: CourseStep, kind: str, prompt_id: int) -> tuple[str, list[list[Button]]]:
+        if kind == "event_attendance":
+            text = f"<b>Did you attend?</b> (O'Reilly live event)\n{self._event_line(st)}"
+            buttons = [[Button("✓ Attended", f"p:{prompt_id}:attended"),
+                        Button("✗ Missed it", f"p:{prompt_id}:missed")]]
+        elif st.attendance == Attendance.MISSED:
+            text = f"<b>Recording ready</b>: you missed this one live\n{self._event_line(st)}"
+            buttons = self._watch_buttons(st, prompt_id)
+        else:
+            text = (f"<b>Recording available</b>: you attended; it's queued for review\n"
+                    f"{self._event_line(st)}")
+            buttons = self._watch_buttons(st, prompt_id)
+        return text, buttons
+
+    def _event_action(self, s, p: Prompt, action: str, now: datetime) -> ActionResult:
+        payload = dict(p.payload or {})
+        st = s.get(CourseStep, payload.get("step_id"))
+        if st is None:
+            return ActionResult(toast="That lesson no longer exists.")
+        base = payload.get("text", self._event_line(st))
+
+        if action in ("attended", "missed"):
+            st.attendance = Attendance(action)
+            p.status = PromptStatus.ANSWERED
+            if action == "attended":
+                note = "✓ Attended: queued for review once the recording is out."
+            else:
+                note = "✗ Missed: you'll be prompted to watch the recording."
+            if st.url:  # recording already there: offer it now instead of a second message
+                st.recording_notified_at = now
+                return ActionResult(edit=Outgoing(f"{base}\n\n{note}", self._watch_buttons(st, p.id)))
+            return ActionResult(edit=Outgoing(f"{base}\n\n{note}"))
+
+        if action == "watched":
+            if st.done_at:
+                return ActionResult(toast="Already marked watched.")
+            s.add(LogEntry(area=Area.LEARNING, prompt_id=p.id, outcome=Outcome.DONE, created_at=now,
+                           course_id=st.course_id, course_step_id=st.id))
+            extra = self._complete_step(s, st.id, now)
+            p.status = PromptStatus.ANSWERED
+            link_row = [[Button("▶ Open recording", url=st.url)]] if st.url else []
+            return ActionResult(edit=Outgoing(f"{base}\n\n✓ Watched", link_row), extra=extra)
+
+        return ActionResult(toast="Unknown action.")
 
     def _routine_text(self, r: Routine) -> str:
         head = f"<b>Movement: {html.escape(r.name)}</b>"
@@ -322,9 +418,17 @@ class Engine:
                 if step is None:
                     return f"{head}\nNo lessons left; add more or mark the course complete in the admin page."
                 payload["step_id"] = step.id
-                body = f"Next: {html.escape(step.title)}{link(step.url)}"
-                if step.detail:
-                    body += f"\n{html.escape(step.detail)}"
+                if step.is_event:
+                    when = f" on {step.event_date:%d %b}" if step.event_date else ""
+                    why = ("You missed this live" + when + ": <b>watch the recording</b>"
+                           if step.attendance == Attendance.MISSED else "Review: you attended" + when)
+                    body = f"{html.escape(step.title)}{link(step.url, 'recording')}\n{why}"
+                    if step.presenters:
+                        body += f"\n<i>{html.escape(step.presenters)}</i>"
+                else:
+                    body = f"Next: {html.escape(step.title)}{link(step.url)}"
+                    if step.detail:
+                        body += f"\n{html.escape(step.detail)}"
             elif course.kind == CourseKind.TIME:
                 body = f"Goal: {course.daily_goal_min or 20} min today"
             else:
@@ -359,6 +463,9 @@ class Engine:
             if p is None:
                 return ActionResult(toast="That prompt no longer exists.")
             payload = dict(p.payload or {})
+
+            if p.kind in EVENT_KINDS:
+                return self._event_action(s, p, action, now)
 
             if action == "another":
                 if p.status == PromptStatus.ANSWERED:
@@ -489,6 +596,13 @@ class Engine:
             return "Noted."
 
     # --- commands -------------------------------------------------------------
+
+    def oreilly(self, data: str, now: datetime) -> tuple[str | None, Outgoing | None]:
+        """/oreilly views and their buttons (see app/oreilly.py)."""
+        from app import oreilly
+
+        with self.db.session() as s:
+            return oreilly.view(s, data, now)
 
     def summary(self, now: datetime) -> str:
         with self.db.session() as s:

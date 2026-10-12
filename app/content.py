@@ -15,6 +15,7 @@ File format (see content/oreilly.yaml):
       - key, name, category, kind?, url?, notes?, daily_goal_min?
         lessons:
           - key, title, detail?, url?
+            date?, presenters?, attendance?   # live events: registered|waitlisted|attended|missed
 """
 
 import logging
@@ -25,7 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import Database
-from app.models import Category, Course, CourseKind, CourseStep, LearningPath
+from app.models import Attendance, Category, Course, CourseKind, CourseStep, LearningPath, utcnow
 
 log = logging.getLogger(__name__)
 
@@ -61,11 +62,14 @@ def _course(s: Session, data: dict, path: LearningPath | None, counts: dict) -> 
     for lesson in data.get("lessons", []):
         step = _by_key(s, CourseStep, lesson["key"])
         if step is not None:
-            # Fill in a link the item doesn't have yet (e.g. a recording issued later);
-            # never overwrite one set in the admin page.
+            # Fill in what the item doesn't have yet (e.g. a recording issued later, or event
+            # fields added to the file); never overwrite values set in the admin page or Telegram.
             if step.url is None and lesson.get("url"):
                 step.url = lesson["url"]
                 counts["links"] += 1
+            for field, value in _event_fields(lesson).items():
+                if getattr(step, field) is None and value is not None:
+                    setattr(step, field, value)
             continue
         course.steps.append(
             CourseStep(
@@ -74,9 +78,23 @@ def _course(s: Session, data: dict, path: LearningPath | None, counts: dict) -> 
                 title=lesson["title"],
                 detail=lesson.get("detail"),
                 url=lesson.get("url"),
+                # A link that comes with a new lesson is already known; only links filled in
+                # later (e.g. a recording issued after the event) trigger a "recording ready" message.
+                recording_notified_at=utcnow() if lesson.get("url") else None,
+                **_event_fields(lesson),
             )
         )
         counts["lessons"] += 1
+
+
+def _event_fields(lesson: dict) -> dict:
+    """Optional live-event fields: date (YYYY-MM-DD), presenters, attendance."""
+    attendance = lesson.get("attendance")
+    return {
+        "event_date": lesson.get("date"),  # YAML parses ISO dates to datetime.date
+        "presenters": lesson.get("presenters"),
+        "attendance": Attendance(attendance) if attendance else None,
+    }
 
 
 def import_file(db: Database, file: Path) -> dict:

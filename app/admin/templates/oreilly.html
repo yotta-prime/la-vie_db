@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}O'Reilly · la-vie{% endblock %}
+
+{% macro when(st) -%}
+  {{ (st.event_date.day ~ " " ~ st.event_date.strftime("%b %Y")) if st.event_date else "TBC" }}
+{%- endmacro %}
+
+{% macro state_chip(st) -%}
+  {% set labels = {"pending": st.attendance.value|title, "awaiting": "Awaiting recording",
+                   "missed": "Missed · to watch", "attended": "Attended", "watched": "Watched"} %}
+  <span class="chip">{{ labels[st.event_state] }}</span>
+{%- endmacro %}
+
+{# Status controls: attendance buttons, a "watched" checkbox, and a link field where useful. #}
+{% macro controls(st, link_field=False) %}
+<form method="post" action="/admin/oreilly/{{ st.id }}" class="row" style="gap:4px">
+  {% if st.event_state == "pending" %}
+    <button class="icon" name="action" value="attended" title="I attended">Attended</button>
+    <button class="icon" name="action" value="missed" title="I didn't attend">Missed</button>
+  {% else %}
+    <button class="icon" name="action" value="{{ 'missed' if st.attendance.value == 'attended' else 'attended' }}"
+      title="Switch attended / missed">{{ "→ Missed" if st.attendance.value == "attended" else "→ Attended" }}</button>
+    {% if st.url %}
+    <button class="icon" name="action" value="watched" title="Toggle watched">{{ "☑" if st.done_at else "☐" }} Watched</button>
+    {% endif %}
+  {% endif %}
+</form>
+{% if link_field %}
+<form method="post" action="/admin/oreilly/{{ st.id }}" class="row" style="gap:4px;margin-top:4px">
+  <input type="hidden" name="action" value="url">
+  <input class="grow" type="url" name="url" placeholder="Paste recording link" style="min-height:30px">
+  <button class="icon">Add</button>
+</form>
+{% endif %}
+{% endmacro %}
+
+{% macro title_cell(st) -%}
+  <strong>{{ st.title }}</strong>
+  <div class="muted" style="font-size:12px"><a href="/admin/courses/{{ st.course_id }}">{{ st.course.name }}</a></div>
+{%- endmacro %}
+
+{% block content %}
+<style>
+  .wide { overflow-x: auto; }
+  .wide table { min-width: 720px; }
+  .num { width: 36px; color: var(--muted); }
+  .date { white-space: nowrap; width: 100px; }
+  tr.done td { color: var(--done); }
+  .totals { font-weight: 600; }
+  .radar h1 { font-size: 28px; }
+  .radar h2 { margin-top: 20px; }
+  .radar h3 { font: 600 16px/1.2 var(--font-heading); margin: 18px 0 6px; }
+  .radar blockquote { margin: 0; padding: 8px 14px; border-left: 2px solid var(--accent); background: var(--surface); }
+  .radar hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+</style>
+
+<h1>O'Reilly Live Events — David Barbour</h1>
+<p class="muted">Live from la-vie: past and upcoming O'Reilly live events, recordings and what's left to watch.
+  Status changes here and in Telegram are the same data. Lessons live in the <a href="/admin/learning">Learning</a> paths.</p>
+
+<section>
+  <h2>📅 Planned / Registered (upcoming)</h2>
+  <div class="wide"><table>
+    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th></th></tr>
+    {% for st in pending %}
+    <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
+      <td>{{ st.presenters or "" }}</td><td>{{ state_chip(st) }}</td><td>{{ controls(st) }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">Nothing upcoming.</td></tr>{% endfor %}
+  </table></div>
+  <p class="muted" style="margin-top:8px">The day after each event, Telegram asks whether you attended.</p>
+</section>
+
+<section>
+  <h2>🎬 To watch — missed live</h2>
+  <div class="wide"><table>
+    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Recording</th><th></th></tr>
+    {% for st in to_watch %}
+    <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
+      <td>{{ st.presenters or "" }}</td><td><a href="{{ st.url }}" target="_blank" rel="noopener">Watch Recording</a></td>
+      <td>{{ controls(st) }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">Nothing to catch up on.</td></tr>{% endfor %}
+  </table></div>
+</section>
+
+<section>
+  <h2>⏳ Recording not yet issued</h2>
+  <div class="wide"><table>
+    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th></th></tr>
+    {% for st in awaiting %}
+    <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
+      <td>{{ st.presenters or "" }}</td><td><span class="chip">{{ st.attendance.value|title }}</span></td>
+      <td>{{ controls(st, link_field=True) }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">None.</td></tr>{% endfor %}
+  </table></div>
+  <p class="muted" style="margin-top:8px">Adding a link sends a "recording ready" message in Telegram.</p>
+</section>
+
+{% for year, rows in years %}
+<section>
+  <h2>{{ year or "Undated" }}</h2>
+  <div class="wide"><table>
+    <tr><th class="num">#</th><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Recording</th><th>Status</th><th></th></tr>
+    {% for n, st in rows %}
+    <tr id="e{{ st.id }}" class="{{ 'done' if st.done_at }}"><td class="num">{{ n }}</td><td class="date">{{ when(st) }}</td>
+      <td>{{ title_cell(st) }}</td><td>{{ st.presenters or "" }}</td>
+      <td><a href="{{ st.url }}" target="_blank" rel="noopener">Watch Recording</a></td>
+      <td>{{ state_chip(st) }}</td><td>{{ controls(st) }}</td></tr>
+    {% endfor %}
+  </table></div>
+</section>
+{% endfor %}
+
+<section>
+  <p class="totals">Attended: {{ totals.attended }} (+{{ totals.attended_awaiting }} awaiting recordings)
+    &nbsp;|&nbsp; Missed: {{ totals.missed }} ({{ totals.missed_to_watch }} still to watch)
+    &nbsp;|&nbsp; Upcoming registered: {{ totals.registered }} (+{{ totals.waitlisted }} waitlisted)
+    &nbsp;|&nbsp; Watched in la-vie: {{ totals.watched }}</p>
+  <p class="muted"><strong>Repeated titles:</strong> titles are as O'Reilly issued them. <em>Agentic Coding with Google
+    Antigravity CLI</em> ran twice (20 Aug and 2 Sep 2026) and is one lesson here; <em>What's Happening in Data</em> is a
+    recurring series; <em>Architectural Katas Q4 2025</em> was a two-part event.</p>
+  <p class="muted"><strong>Recording links:</strong> recent ones are personal O'Reilly links from your recording emails.
+    For older events, log into <a href="https://learning.oreilly.com/" target="_blank" rel="noopener">learning.oreilly.com</a>
+    → My Events → Past Events.</p>
+</section>
+
+{% if radar %}
+<section class="radar">{{ radar|safe }}</section>
+{% endif %}
+{% endblock %}

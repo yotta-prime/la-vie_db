@@ -71,6 +71,22 @@ Desk job, ~9–5 on weekdays. Prompts are spread through the day:
   - Lessons are newest first, with upcoming and waitlisted events last. Attended events are **queued for review**: none are marked done.
   - 43 lessons link to their recording: personal links from the Gmail recording emails, or `learning.oreilly.com` for older events. The 5 events with recordings not yet issued and the 4 upcoming events have no link until one is added to the file.
 
+### Live-event lessons (O'Reilly)
+Each event lesson has a date, presenters and an **attendance**: registered, waitlisted, attended or missed. A recording link and a **watched** tick complete the picture, giving these states:
+
+| State | Meaning | What la-vie does |
+|---|---|---|
+| **Pending** (a) | Registered/waitlisted, not happened yet | Never offered as a lesson. The day after the event, Telegram asks **Did you attend? [Attended] [Missed]** (once; waits out quiet hours) |
+| **Awaiting recording** | Attended or missed, no link yet | Not offered. Add the link (file, admin O'Reilly page, or later email) and Telegram announces it |
+| **Attended, with recording** (b) | Completed live | Queued for **review**, after missed ones |
+| **Missed, to watch** (c) | Registered but didn't attend | Offered **first** at the learning session. When its recording arrives: **Recording ready [▶ Open] [✓ Watched]** |
+| **Watched** | Ticked | Done; the course completes when all its lessons are |
+
+Status can be changed in three places that share the same data: the admin **O'Reilly** page (buttons per row), Telegram `/oreilly`, and the confirmation messages.
+
+### O'Reilly page (admin)
+`/admin/oreilly`, laid out like `oreilly_events_06-Oct-26.md`: Planned/Registered, **To watch (missed live)**, Recording not yet issued (with a field to paste the link), numbered tables per year with recording links, totals and notes, then the **O'Reilly Radar newsletter summary** (page 2 of the file, `content/oreilly_radar.md`). Each row has Attended/Missed and Watched controls.
+
 ### Hobbies
 - Hobby list with **projects** (things to do within the hobby, with optional link and notes; can be marked done).
 - **Dependencies**: a project can require a **course** or a **whole learning path** to be completed first; locked projects are never suggested, and completing the requirement announces the unlock in Telegram.
@@ -92,6 +108,7 @@ Set in the admin page for each item:
 - `/log <activity> [duration]` — ad-hoc log, e.g. `/log run 30m`.
 - `/focus [minutes]` — start a focus block.
 - `/summary` — this week so far; `/status` — what's left today, pauses, streaks.
+- `/oreilly` — O'Reilly events: counts, then **To watch / Review / Upcoming / Awaiting** lists and **Paths & courses**, down to each lesson with **▶ Open recording**, **✓ Watched** and **Attended / Missed** buttons. One message, updated in place.
 - `/health` — version and connection check; `/help`; `/ping`.
 - On every start the bot sends **"la-vie started, version …"**.
 - Quiet hours enforced server-side.
@@ -116,7 +133,7 @@ At **http://192.168.0.198:8080/admin** (generally `http://<nas-ip>:8080/admin`),
 
 ## Data model (sketch)
 
-`routine` (+ url, notes), `routine_step` (+ url), `micro_move`, `learning_path` (category, sequential, source_key), `course` (path, position, category, kind, goal, url, completed, source_key), `course_step` (url, done, source_key), `flashcard` (+ SRS state), `hobby`, `hobby_project` (url, notes, `requires_course_id` / `requires_path_id`, done), `schedule_rule` (course or hobby; method, sessions/week, weekdays, start/end, weight), `prompt` (sent, due, status), `log_entry` (area, item, outcome, duration, rating, note), `setting`, `schema_version` (currently **2**: v1 courses/projects, v2 source keys).
+`routine` (+ url, notes), `routine_step` (+ url), `micro_move`, `learning_path` (category, sequential, source_key), `course` (path, position, category, kind, goal, url, completed, source_key), `course_step` (url, done, source_key; live events: event_date, presenters, attendance, attendance_asked_at, recording_notified_at), `flashcard` (+ SRS state), `hobby`, `hobby_project` (url, notes, `requires_course_id` / `requires_path_id`, done), `schedule_rule` (course or hobby; method, sessions/week, weekdays, start/end, weight), `prompt` (sent, due, status), `log_entry` (area, item, outcome, duration, rating, note), `setting`, `schema_version` (currently **3**: v1 courses/projects, v2 source keys, v3 live-event fields).
 
 ## v1 scope
 
@@ -155,6 +172,10 @@ All times are editable in the admin page.
 | Admin page (all content and settings), Industry theme | Built |
 | Learning paths / courses / lessons, hobby projects and dependencies | Built |
 | Learning content files, O'Reilly events with recording links | Built |
+| Event statuses (pending / awaiting / attended / missed / watched), Telegram confirmations | Built |
+| Admin O'Reilly page (events file layout + Radar summary), Telegram `/oreilly` | Built |
+| NAS reads O'Reilly email (dedicated inbox) and updates events | Planned |
+| Radar summary refreshed from newsletters | Planned (needs an AI step) |
 | Watchdog, `/health` stale detection, startup message | Built |
 | Outside heartbeat (healthchecks.io) | Built; not yet configured on the NAS |
 | Flashcard reviews in Telegram (FSRS) | Not built: flashcard courses show a placeholder |

@@ -24,38 +24,65 @@ paths:
             title: AI-Assisted Test-Driven Development
             detail: Venkat Subramaniam · 30 Sep 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjUwMTZ9AAcAAAAAB0q3_Jp3QiWkKA_ph8naNFndE50L8ZM1hbiY1coZPeBdRLhkVRhgTdHy1dAMzJoOWxUxwyHy7zIhk85Nx8tqu6v920ioQJQqBL2vSVD_5sE"
+            date: 2026-09-30
+            presenters: "Venkat Subramaniam"
+            attendance: attended
           - key: oreilly-2026-09-17-vibe-vs-spec
             title: Vibe Coding vs Spec-Driven Development
             detail: Sergio Pereira · 17 Sep 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjUwMDN9AAcAAAAABruLrDQxKvm9XeMfCRIiGyRUjf42JdeXDmvPoUCPtOxLUj-AFZKhTljWbOOKvTv49H26JgIQQXonJcodkNThZOLgWLIk7LOLQpXomiNo8iY"
+            date: 2026-09-17
+            presenters: "Sergio Pereira"
+            attendance: attended
           - key: oreilly-2026-antigravity-cli
             title: Agentic Coding with Google Antigravity CLI
             detail: Ken Kousen · 20 Aug and 2 Sep 2026 (same course, run twice)
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5ODl9AAcAAAAABiMduJbhppR6uXlzFzYVa33MPEDFYrmqaBYy-0Wywi6lIknTUn20OGyqPrvu_9X5fBPBHPCmkVNGhaKwX4XHlzWKm5eUjddSstTXiT64-7k"
+            date: 2026-09-02
+            presenters: "Ken Kousen"
+            attendance: attended
           - key: oreilly-2026-08-03-prompt-debt
             title: "Escaping the Prompt Debt Trap: Drew Breunig Live with Tim O'Reilly"
             detail: Tim O'Reilly, Drew Breunig · 3 Aug 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5NTl9AAcAAAAABNt1K05wgJDXCQNQiG-lzDw5PYEdmDCsSoKZeC03JKg55jJ2zChWtTidn0bdTX_-KUz9f0suUsPlAMTbr0PCV-6zkwnGWWV6wUelUs8Bzw"
+            date: 2026-08-03
+            presenters: "Tim O'Reilly, Drew Breunig"
+            attendance: attended
           - key: oreilly-2026-07-21-chelsea-troy
             title: Agentic Coding Live with Chelsea Troy
             detail: Chelsea Troy · 21 Jul 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5NDV9AAcAAAAABFDtgwdpiZxoiyMPcNgBo2GY33YH-o3FtOQtOPEnhw0Kfj5ufXN1hwEeo7mvWJYVdpEeLGxQLFxNmQiNQIGQeYrE65t103OZ_fegvQdJfG4"
+            date: 2026-07-21
+            presenters: "Chelsea Troy"
+            attendance: attended
           - key: oreilly-2026-05-04-openclaw-compared
             title: OpenClaw, Claude Cowork, and Claude Code Compared
             detail: Mark Kashef · 4 May 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ4Njh9AAcAAAAAAPo8ZoDY-evalBRrhN8tUo8AFq8Jpd0q7wEk8-KvXDq6CqC79BJex9N40CxmOkOL7zXwCEbub8z1DbVVqpkqVOyxrRedUmiJAmy7A2w97w"
+            date: 2026-05-04
+            presenters: "Mark Kashef"
+            attendance: attended
           - key: oreilly-2025-10-30-context-engineering
             title: AI Context Engineering
             detail: Skanda Vivek · 30 Oct 2025
             url: "https://click.et.oreilly.com/?qs=4b284e44c4b208284e679bfcd796942e79c443801eeea9643fbdb55174f995885b545966bde7efff7c4f98406dd1824df60e6183e6d20a0c36796711227e49ae"
+            date: 2025-10-30
+            presenters: "Skanda Vivek"
+            attendance: attended
           - key: oreilly-2025-10-27-vibe-coding-python
             title: Vibe Coding with Python
             detail: Matt Harrison · 27 Oct 2025
             url: "https://click.et.oreilly.com/?qs=c407e12a9f2678e3b0ee57147f89b35b07275b18e7d8f5832c7b587ff27473962ae67c0541a5838ecb66e86ffe333b6718a0589e2596d71e677ce3a82d41fdac"
+            date: 2025-10-27
+            presenters: "Matt Harrison"
+            attendance: attended
           - key: oreilly-2025-09-17-claude-code
             title: Agentic Coding with Claude Code
             detail: Ken Kousen · 17 Sep 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-09-17
+            presenters: "Ken Kousen"
+            attendance: attended
 
       - key: oreilly-building-agents
         name: Building & orchestrating agents
@@ -65,41 +92,71 @@ paths:
             title: "Give Your Agents Superpowers: Jesse Vincent Live with Tim O'Reilly"
             detail: Tim O'Reilly, Jesse Vincent · 16 Sep 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjUwMDN9AAcAAAAABrOqxfjb74mrKSYnnHiFhHps_RDenmwi6L66qsDkWl72-JEGtgFoafuSYML_w9jA4FktkNqzcQrMZ8eParulqfpFoOedzZ2iQNzJuUTBQms"
+            date: 2026-09-16
+            presenters: "Tim O'Reilly, Jesse Vincent"
+            attendance: attended
           - key: oreilly-2026-08-31-ai-codecon
             title: "AI Codecon: Building with Open Source AI"
             detail: Tim O'Reilly, Addy Osmani, Angie Jones and others · 31 Aug 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5ODd9AAcAAAAABgjEaFwCH99rP13yaSh-fZ7CYcuR0hhzL-t4r3eINrLYiUc9BITIp7SpcML5OAjt0z86JkWpivd-HMrEytS0i-5YhxsE5735Sbnz33v-4fc"
+            date: 2026-08-31
+            presenters: "Tim O'Reilly, Addy Osmani, Angie Jones, Sunny Israni, Drew Breunig, Mike Linksvayer, Gene Kim, Isha Chaturvedi, Raffi Krikorian, Gabe Goodhart, Ahmad Osman, Seth Clark, Vaibhav Gupta, Ayah Bdeir"
+            attendance: attended
           - key: oreilly-2026-08-27-agentic-finance
             title: "GenAI Superstream: Agentic AI for Finance"
             detail: Eric Freeman, Sarah Hoffman and others · 27 Aug 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5ODJ9AAcAAAAABdxr1bIm5o5w9-byS34AU3mEotGHYI-3cTWHWRDwzjCLq49FDcDgyXShbasK0Ev-fSGOejWF7as9Ez-QfK3bDPJZyQvn5VeslvJeLz8"
+            date: 2026-08-27
+            presenters: "Eric Freeman, Gilit Saporta, Sarah Hoffman, Sagar Rao, Moody Hadi, Shreshta Shyamsundar, Anmol Jain, Jayeeta Putatunda"
+            attendance: attended
           - key: oreilly-2026-07-23-ai-harnesses
             title: "AI Superstream: AI Harnesses"
             detail: Christina Stathopoulos, John Berryman and others · 23 Jul 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5NDd9AAcAAAAABGWbg9_Ik2V-zOZCh-yU5QYVSnYp6Y-8TJ89ZfqBM-I6Osw3LJkuoaaqdr6S9qWhdg2dFX-bX7IvZrYM2jnZ8JFvDjDXu9HQld5vfopKDQ"
+            date: 2026-07-23
+            presenters: "Christina Stathopoulos, John Berryman, Nicole Koenigstein, Vineeth Kalluru, Sergio Gonzalez, Jake Levirne, Casius Lee"
+            attendance: attended
           - key: oreilly-2026-06-09-agent-orchestration
             title: "AI Superstream: Agent Orchestration"
             detail: Vicki Reyzelman, Matt McLarty, Cornelia Davis and others · 9 Jun 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5MDN9AAcAAAAAAobKFuexOYeaQ5Pk_kfWKe777MqPIAIand9Sd67AMVZyCd8BSfw9qBEYmZrtKTVxfygO4D3uzSdIMhXKj40OtEWy4quyjneMDpuSZZyw"
+            date: 2026-06-09
+            presenters: "Vicki Reyzelman, Matt McLarty, Ayo Adedeji, Tendu Yogurtcu, Susanna Holt, Sumeet Jeswani, Luis Sanchez, Tatyana Mamut, Cornelia Davis"
+            attendance: attended
           - key: oreilly-2026-06-09-eval-driven
             title: Eval-Driven Development for Reliable Agents
             detail: Ben O'Mahony · 9 Jun 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5MDN9AAcAAAAAAnwoU-t3gJ7tc0IzMg47qdrHzBHDgzwknd2H_Hypni-04kdsX9VnQ0inKRaKvbXQSeC6T1owDcFGnNfCh-vye027Z2gVRpRwm5HrHxXdGPQ"
+            date: 2026-06-09
+            presenters: "Ben O'Mahony"
+            attendance: attended
           - key: oreilly-2026-06-03-agents-like-a-pro
             title: How to Create AI Agents Like a Pro
             detail: Tim Warner · 3 Jun 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ4OTh9AAcAAAAAAkmfY3zKZ0HaTTktQiI36iUSkba2rSbHrmS2oRFyBro6Wtx_OaEMN0kiY-sAt3-SD1-X0L6XaXN2BigS7KX8k628wyQhX8pmZ6ZVcICcYaw"
+            date: 2026-06-03
+            presenters: "Tim Warner"
+            attendance: attended
           - key: oreilly-2026-05-19-openclaw-friends
             title: "AI Superstream: OpenClaw and Friends"
             detail: Alistair Croll, Eran Sandler and others · 19 May 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ4ODJ9AAcAAAAAAZxVh4zSTrjHUTHnIWgZg6jUvnr5h9IqOqeLK8sOxGgZ11L_UHO7kZHPJMeJEmP3xqC_Luf-SsVQGxjNL1L8IBYWkWbXcRd69o6lO4xN"
+            date: 2026-05-19
+            presenters: "Alistair Croll, Eran Sandler, Ari Joury, Kyle Balmer, Erik Hanchett, Kesha Williams"
+            attendance: attended
           - key: oreilly-2025-06-11-ai-agents
             title: "AI Superstream: AI Agents"
             detail: Antje Barth, Patrick Debois, Lucas Soares and others · 11 Jun 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-06-11
+            presenters: "Antje Barth, Patrick Debois, Lucas Soares, Tony Kipkemboi (et al.)"
+            attendance: attended
           - key: oreilly-2026-10-13-agent-memory
             title: "Expert Showcase: Agent Memory"
             detail: Live 13 Oct 2026 (registered)
+            date: 2026-10-13
+            presenters: "Ksenia, Lewis Liu, Sally O'Malley, Jason Davenport, Jess Weng, Xavier Bull, Shawn Shen, Kris Murphy, Pete Johnson"
+            attendance: registered
 
       - key: oreilly-llm-foundations
         name: LLM & prompting foundations
@@ -109,25 +166,43 @@ paths:
             title: "Cracking LLMs Open: Emmanuel Ameisen Live with Tim O'Reilly"
             detail: Tim O'Reilly, Emmanuel Ameisen · 9 Sep 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5OTZ9AAcAAAAABmf-Vsw-lUrNUEasHOvWddO_I2bKGevRRofCSE4pnakdwQdj2TJ0GfPDajGO10k4kQ6C3CQ7iszhbytEyxGuD9RYpG-Os4_g7ugC29VToI0"
+            date: 2026-09-09
+            presenters: "Tim O'Reilly, Emmanuel Ameisen"
+            attendance: attended
           - key: oreilly-2025-10-16-odsc-unboxed
             title: "ODSC AI Unboxed: Hands-On Lightning Sessions"
             detail: Sheamus McGovern and others · 16 Oct 2025
             url: "https://click.et.oreilly.com/?qs=d785ea69a355df615ac37495cbb2548cafb6c88654a667656a0cb7fa467c6960a1810bd28811660d8840cefe93900ebd041fc4dbc93e7ee9d5e884dd7d27b40a"
+            date: 2025-10-16
+            presenters: "Sheamus McGovern, Greg Loughnane, Chris Alexiuk, Sandi Besen, Michelle Yi, Ivan Lee, Robert Brennan"
+            attendance: attended
           - key: oreilly-2025-04-04-prompt-to-product
             title: GenAI Prompt to Product Showdown
             detail: Lucas Soares · 4 Apr 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-04-04
+            presenters: "Lucas Soares"
+            attendance: attended
           - key: oreilly-2024-02-15-competing-llms
             title: ChatGPT and Competing LLMs
             detail: Bruno Gonçalves · 15 Feb 2024
             url: "https://learning.oreilly.com/"
+            date: 2024-02-15
+            presenters: "Bruno Gonçalves"
+            attendance: attended
           - key: oreilly-2024-02-06-effective-prompts
             title: Writing Effective Prompts for ChatGPT
             detail: Sarah Tamsin · 6 Feb 2024
             url: "https://learning.oreilly.com/"
+            date: 2024-02-06
+            presenters: "Sarah Tamsin"
+            attendance: attended
           - key: oreilly-2026-10-08-claude-exam-prep
             title: "Claude Certified Associate Exam Prep: A Two-Hour Crash Course"
             detail: Lucas Soares · 8 Oct 2026 (registered; recording due)
+            date: 2026-10-08
+            presenters: "Lucas Soares"
+            attendance: registered
 
   - key: oreilly-path-architecture
     name: Software architecture
@@ -142,29 +217,49 @@ paths:
           - key: oreilly-2026-10-06-whats-happening-architecture
             title: What's Happening in Software Architecture
             detail: Luca Mezzalira · 6 Oct 2026 (recording not yet issued)
+            date: 2026-10-06
+            presenters: "Luca Mezzalira"
+            attendance: attended
           - key: oreilly-2025-11-05-katas-part2
             title: "Architectural Katas Q4 2025: AI-Enabled Architecture (part 2)"
             detail: Sam Newman · 5 Nov 2025
             url: "https://click.et.oreilly.com/?qs=c407e12a9f2678e3b0ee57147f89b35b07275b18e7d8f5832aa5b750486a619904e901996f2caa7c22208d0b744287e2fea0a4f84bb7fb7abcbe281f8d9f748f"
+            date: 2025-11-05
+            presenters: "Sam Newman"
+            attendance: attended
           - key: oreilly-2025-10-15-katas-part1
             title: "Architectural Katas Q4 2025: AI-Enabled Architecture (part 1)"
             detail: Sam Newman · 15 Oct 2025
             url: "https://click.et.oreilly.com/?qs=c407e12a9f2678e3b0ee57147f89b35b07275b18e7d8f5832aa5b750486a619904e901996f2caa7c22208d0b744287e2fea0a4f84bb7fb7abcbe281f8d9f748f"
+            date: 2025-10-15
+            presenters: "Sam Newman"
+            attendance: attended
           - key: oreilly-2025-04-15-ai-infrastructure
             title: "Infrastructure & Ops Superstream: AI Infrastructure"
             detail: Sam Newman, Abhishek Veeramalla, Colleen Tartow and others · 15 Apr 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-04-15
+            presenters: "Sam Newman, Abhishek Veeramalla, Colleen Tartow (et al.)"
+            attendance: attended
           - key: oreilly-2024-10-02-genai-software-dev
             title: "Software Development Superstream: Generative AI to Improve Software Development"
             detail: Sam Newman and others · 2 Oct 2024
             url: "https://learning.oreilly.com/"
+            date: 2024-10-02
+            presenters: "Sam Newman (et al.)"
+            attendance: attended
           - key: oreilly-2024-01-25-architecture-genai
             title: "Software Architecture Superstream: Software Architecture and Generative AI"
             detail: Neal Ford and others · 25 Jan 2024
             url: "https://learning.oreilly.com/"
+            date: 2024-01-25
+            presenters: "Neal Ford (et al.)"
+            attendance: attended
           - key: oreilly-2026-katas-ai-assisted
             title: "Architectural Katas 2026: AI-Assisted Software Architecture"
             detail: Sam Newman, Gayathri Mohan, Ben O'Mahony, Ian Cooper · date TBC (waitlisted)
+            presenters: "Sam Newman, Gayathri Mohan, Ben O'Mahony, Ian Cooper"
+            attendance: waitlisted
 
   - key: oreilly-path-leadership
     name: Engineering leadership & organisation
@@ -179,22 +274,37 @@ paths:
           - key: oreilly-2026-10-06-tlt-eng-leadership
             title: "Tech Leadership Tuesday: Why Software Engineering Is Becoming Engineering Leadership"
             detail: Gregor Ojstersek, Lena Reinhard · 6 Oct 2026 (recording not yet issued)
+            date: 2026-10-06
+            presenters: "Lena Reinhard, Gregor Ojstersek"
+            attendance: attended
           - key: oreilly-2026-09-14-cto-hour-ai-roi
             title: "CTO Hour with Peter Bell: Managing AI ROI in the SDLC"
             detail: Peter Bell, Farhan Thawar · 14 Sep 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjUwMDB9AAcAAAAABpbLaNvdsVvcp9wGA5MS93jHstIEpO7CfxUcU1m2uFZE2lU2p3q90OZ-M-T_MA6wFH89dCHNPIgB7X9zKo92lhWSJZvisfTmOiECZIU8Z7A"
+            date: 2026-09-14
+            presenters: "Peter Bell, Farhan Thawar"
+            attendance: attended
           - key: oreilly-2025-06-24-cto-hour-will-larson
             title: "CTO Hour with Peter Bell: Sharpening Your Strategic Decision Making with Will Larson"
             detail: Peter Bell, Will Larson · 24 Jun 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-06-24
+            presenters: "Peter Bell, Will Larson"
+            attendance: attended
           - key: oreilly-2025-03-19-tlt-teams-genai
             title: "Tech Leadership Tuesday: Leading Effective Engineering Teams in the Age of Generative AI"
             detail: Lena Reinhard, Addy Osmani · 19 Mar 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-03-19
+            presenters: "Lena Reinhard, Addy Osmani"
+            attendance: attended
           - key: oreilly-2024-05-29-supercharged-teams
             title: Supercharged Teams
             detail: Pamela Hamilton · 29 May 2024
             url: "https://learning.oreilly.com/"
+            date: 2024-05-29
+            presenters: "Pamela Hamilton"
+            attendance: attended
 
       - key: oreilly-ai-organisation
         name: AI & the organisation
@@ -203,21 +313,36 @@ paths:
           - key: oreilly-2026-10-05-agents-change-org
             title: "How Agents Change an Organization: Rohit Krishnan Live with Tim O'Reilly"
             detail: Tim O'Reilly, Rohit Krishnan · 5 Oct 2026 (recording not yet issued)
+            date: 2026-10-05
+            presenters: "Tim O'Reilly, Rohit Krishnan"
+            attendance: attended
           - key: oreilly-2026-07-21-gene-kim
             title: "The Days When Fable Got Hit by a Bus and Disappeared: Gene Kim Live with Tim O'Reilly"
             detail: Tim O'Reilly, Gene Kim · 21 Jul 2026
             url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ5NDR9AAcAAAAABEX9Yp9dgGCoQYHC7OvadfbKvpfNc52AXppRsc7v2QNFsjlGMv3ofhU54LENgwhRQNnYFgkBhz_m5WjRLGLBqFBbTQAYO1b0e07xti-xzc8"
+            date: 2026-07-21
+            presenters: "Tim O'Reilly, Gene Kim"
+            attendance: attended
           - key: oreilly-2025-09-17-demo-day
             title: O'Reilly Demo Day
             detail: Tim O'Reilly and others · 17 Sep 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-09-17
+            presenters: "Tim O'Reilly, Jonathan Hassell, Heiko Hotz, Sokratis Kartakis, Nicole Koenigstein, Jason Gilmore, José Côrte-Real, Virender Bhargav"
+            attendance: attended
           - key: oreilly-2025-08-27-google-docs-founders
             title: "Live with Tim O'Reilly: A Conversation with Google Docs Founders"
             detail: Sam Schillace, Steve Newman, Claudia Carpenter · 27 Aug 2025
             url: "https://learning.oreilly.com/"
+            date: 2025-08-27
+            presenters: "Tim O'Reilly et al."
+            attendance: attended
           - key: oreilly-2026-10-15-org-intelligence
             title: "Building Organizational Intelligence: Andrew Odewahn Live with Tim O'Reilly"
             detail: Live 15 Oct 2026 (registered)
+            date: 2026-10-15
+            presenters: "Tim O'Reilly, Andrew Odewahn"
+            attendance: registered
 
       - key: oreilly-delivery-tools
         name: Project delivery tools
@@ -227,10 +352,16 @@ paths:
             title: Generative AI for Project Management
             detail: Samuel Parri · 19 Jan 2024
             url: "https://learning.oreilly.com/"
+            date: 2024-01-19
+            presenters: "Samuel Parri"
+            attendance: attended
           - key: oreilly-2023-06-17-jira-agile
             title: Jira for Agile Projects
             detail: Jim Weaver · 17 Jun 2023
             url: "https://learning.oreilly.com/"
+            date: 2023-06-17
+            presenters: "Jim Weaver"
+            attendance: attended
 
 courses:
   - key: oreilly-ai-cybersecurity
@@ -241,18 +372,30 @@ courses:
       - key: oreilly-2026-10-05-cyber-frameworks
         title: Cybersecurity Frameworks
         detail: Harpreet Kohli · 5 Oct 2026 (recording not yet issued)
+        date: 2026-10-05
+        presenters: "Harpreet Kohli"
+        attendance: attended
       - key: oreilly-2026-05-21-cyber-defense
         title: Agentic AI for Cyber Defense and Ethical Hacking
         detail: Omar Santos · 21 May 2026
         url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ4ODR9AAcAAAAAAbO0zPoxm21Ay_XpfnpGHJOGSxRzfFgnWT3ZvvkqdrsvJVZakmvxSuhPQgueYGi4jJpfHGyFW2DKaq3HwI3FhIKdrf6Mte_7mHf6mKfSiQ"
+        date: 2026-05-21
+        presenters: "Omar Santos"
+        attendance: attended
       - key: oreilly-2026-04-15-openclaw-risks
         title: "What's New with AI and Cybersecurity: OpenClaw Risks and Opportunities"
         detail: Omar Santos, Aamir Lakhani · 15 Apr 2026
         url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjQ4NDh9AAcAAAAAAB_4UN6er2tBrMkuq-D5q9VXvNFE-FMCSAFmqYrnvFJLpYZQlLPt0FuXEgGDsYQxNsLyqHnUFhq095VPVbvBx3b0kLczgk4o2aK24DJT"
+        date: 2026-04-15
+        presenters: "Omar Santos, Aamir Lakhani"
+        attendance: attended
       - key: oreilly-2025-06-04-secure-vibe-coding
         title: "Building Secure Code in the Age of Vibe Coding: Steve Wilson Live with Tim O'Reilly"
         detail: Tim O'Reilly, Steve Wilson · 4 Jun 2025
         url: "https://learning.oreilly.com/"
+        date: 2025-06-04
+        presenters: "Tim O'Reilly, Steve Wilson"
+        attendance: attended
 
   - key: oreilly-data
     name: Data
@@ -263,14 +406,23 @@ courses:
         title: What's Happening in Data (29 Sep)
         detail: Jordan Morrow, Patrick McFadin, Matt Housley · 29 Sep 2026
         url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjUwMTV9AAcAAAAAB0FYy4T2sn_Xce7RC1GqZDfk1D7gi318sTBU1SxfWsn4LgWLUTZ9ODLdJWbUkcMVulCa6KcpJ_G3CmobUms6q4zPHpzxDP6eM9vX072JhZA"
+        date: 2026-09-29
+        presenters: "Jordan Morrow, Patrick McFadin, Matt Housley"
+        attendance: attended
       - key: oreilly-2026-09-15-whats-happening-data
         title: What's Happening in Data (15 Sep)
         detail: Jordan Morrow, Patrick McFadin, Matt Housley · 15 Sep 2026
         url: "https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjUwMDF9AAcAAAAABqQo8Bcei19e_pVp3E9GmgVN4pqX22aSFZVBF8LvSgKTc4qmvh3hb_tENnMcezrccSI_42raNm4QRmr_CgFj4e3ZXIbS_FRsMIf0VwU49Fw"
+        date: 2026-09-15
+        presenters: "Jordan Morrow, Patrick McFadin, Matt Housley"
+        attendance: attended
       - key: oreilly-2025-10-30-python-data-science
         title: Python Data Science Quick Start
         detail: Andy Olsen · 30 Oct 2025
         url: "https://click.et.oreilly.com/?qs=4b284e44c4b208284e679bfcd796942e79c443801eeea964a1a5254e61c9d0236ce2ed3479d22a1623fa85fdff69847c6ecf9ff2e6a0e8d1004d889b8d2fbd9e"
+        date: 2025-10-30
+        presenters: "Andy Olsen"
+        attendance: attended
 
   - key: oreilly-linux
     name: Linux administration
@@ -280,3 +432,6 @@ courses:
       - key: oreilly-2026-10-06-linux-admin
         title: Linux Administration
         detail: Jack Wallen · 6 Oct 2026 (recording not yet issued)
+        date: 2026-10-06
+        presenters: "Jack Wallen"
+        attendance: attended
