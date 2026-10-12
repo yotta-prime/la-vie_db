@@ -104,6 +104,19 @@ def test_oreilly_page_and_status_controls(client):
         assert exam.event_state == "watched" and exam.attendance_asked_at is not None
         assert exam.recording_notified_at is None  # link added here: Telegram will announce it
 
+    page = client.get("/admin/oreilly").text
+    assert 'class="led led-missed"' in page and 'class="led led-on"' in page  # LEDs, not strike-through
+    assert 'class="done"' not in page
+
+    with db(client).session() as s:
+        mem = s.scalar(select(CourseStep).where(CourseStep.source_key == "oreilly-2026-10-13-agent-memory")).id
+    client.post(f"/admin/oreilly/{mem}", data={"action": "when", "date": "2026-10-13", "time": "17:00"})
+    assert "Time must be HH:MM" in client.post(
+        f"/admin/oreilly/{mem}", data={"action": "when", "date": "2026-10-13", "time": "5pm"}).text
+    with db(client).session() as s:
+        assert s.get(CourseStep, mem).event_time == "17:00"
+    assert "17:00" in client.get("/admin/oreilly").text
+
 
 def test_learning_paths_courses_lessons(client):
     login(client)

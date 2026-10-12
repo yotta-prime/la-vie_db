@@ -3,12 +3,20 @@
 
 {% macro when(st) -%}
   {{ (st.event_date.day ~ " " ~ st.event_date.strftime("%b %Y")) if st.event_date else "TBC" }}
+  {%- if st.event_time %}<br><span class="muted">{{ st.event_time }}</span>{% endif %}
 {%- endmacro %}
 
-{% macro state_chip(st) -%}
-  {% set labels = {"pending": st.attendance.value|title, "awaiting": "Awaiting recording",
-                   "missed": "Missed · to watch", "attended": "Attended", "watched": "Watched"} %}
-  <span class="chip">{{ labels[st.event_state] }}</span>
+{# Two status LEDs: attendance (attended / missed / registered) and recording (watched or not). #}
+{% macro leds(st) -%}
+  {% set att = st.attendance.value %}
+  {% set att_label = {"attended": "Attended", "missed": "Missed", "registered": "Registered",
+                      "waitlisted": "Waitlisted"}[att] %}
+  <span class="leds">
+    <span class="led led-{{ att }}" title="{{ att_label }}"></span><span class="led-label">{{ att_label }}</span>
+    <span class="led {{ 'led-on' if st.done_at else 'led-off' }}"
+      title="{{ 'Recording watched' if st.done_at else ('Recording not watched' if st.url else 'No recording yet') }}"></span>
+    <span class="led-label">{{ "Watched" if st.done_at else ("Not watched" if st.url else "No recording") }}</span>
+  </span>
 {%- endmacro %}
 
 {# Status controls: attendance buttons, a "watched" checkbox, and a link field where useful. #}
@@ -25,6 +33,14 @@
     {% endif %}
   {% endif %}
 </form>
+{% if st.event_state == "pending" %}
+<form method="post" action="/admin/oreilly/{{ st.id }}" class="row" style="gap:4px;margin-top:4px">
+  <input type="hidden" name="action" value="when">
+  <input type="date" name="date" value="{{ st.event_date or '' }}" style="width:auto;min-height:30px">
+  <input type="time" name="time" value="{{ st.event_time or '' }}" style="width:auto;min-height:30px">
+  <button class="icon">Set</button>
+</form>
+{% endif %}
 {% if link_field %}
 <form method="post" action="/admin/oreilly/{{ st.id }}" class="row" style="gap:4px;margin-top:4px">
   <input type="hidden" name="action" value="url">
@@ -45,7 +61,17 @@
   .wide table { min-width: 720px; }
   .num { width: 36px; color: var(--muted); }
   .date { white-space: nowrap; width: 100px; }
-  tr.done td { color: var(--done); }
+  .leds { display: inline-grid; grid-template-columns: 12px auto; gap: 3px 6px; align-items: center;
+          font-size: 12px; white-space: nowrap; }
+  .led { width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+         box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 25%, transparent); }
+  .led-attended, .led-on { background: #3f9c5f; box-shadow: 0 0 5px #3f9c5f; }
+  .led-missed { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
+  .led-registered, .led-waitlisted { background: #d6a23a; box-shadow: 0 0 5px #d6a23a; }
+  .led-waitlisted { opacity: .55; }
+  .led-off { background: transparent; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; gap: 6px; align-items: center; }
   .totals { font-weight: 600; }
   .radar h1 { font-size: 28px; }
   .radar h2 { margin-top: 20px; }
@@ -57,6 +83,13 @@
 <h1>O'Reilly Live Events — David Barbour</h1>
 <p class="muted">Live from la-vie: past and upcoming O'Reilly live events, recordings and what's left to watch.
   Status changes here and in Telegram are the same data. Lessons live in the <a href="/admin/learning">Learning</a> paths.</p>
+<p class="legend">
+  <span><span class="led led-attended"></span> Attended</span>
+  <span><span class="led led-missed"></span> Missed</span>
+  <span><span class="led led-registered"></span> Registered / waitlisted</span>
+  <span><span class="led led-on"></span> Recording watched</span>
+  <span><span class="led led-off"></span> Not watched yet</span>
+</p>
 
 <section>
   <h2>📅 Planned / Registered (upcoming)</h2>
@@ -64,7 +97,7 @@
     <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th></th></tr>
     {% for st in pending %}
     <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
-      <td>{{ st.presenters or "" }}</td><td>{{ state_chip(st) }}</td><td>{{ controls(st) }}</td></tr>
+      <td>{{ st.presenters or "" }}</td><td>{{ leds(st) }}</td><td>{{ controls(st) }}</td></tr>
     {% else %}<tr><td colspan="5" class="muted">Nothing upcoming.</td></tr>{% endfor %}
   </table></div>
   <p class="muted" style="margin-top:8px">The day after each event, Telegram asks whether you attended.</p>
@@ -88,7 +121,7 @@
     <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th></th></tr>
     {% for st in awaiting %}
     <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
-      <td>{{ st.presenters or "" }}</td><td><span class="chip">{{ st.attendance.value|title }}</span></td>
+      <td>{{ st.presenters or "" }}</td><td>{{ leds(st) }}</td>
       <td>{{ controls(st, link_field=True) }}</td></tr>
     {% else %}<tr><td colspan="5" class="muted">None.</td></tr>{% endfor %}
   </table></div>
@@ -101,10 +134,10 @@
   <div class="wide"><table>
     <tr><th class="num">#</th><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Recording</th><th>Status</th><th></th></tr>
     {% for n, st in rows %}
-    <tr id="e{{ st.id }}" class="{{ 'done' if st.done_at }}"><td class="num">{{ n }}</td><td class="date">{{ when(st) }}</td>
+    <tr id="e{{ st.id }}"><td class="num">{{ n }}</td><td class="date">{{ when(st) }}</td>
       <td>{{ title_cell(st) }}</td><td>{{ st.presenters or "" }}</td>
       <td><a href="{{ st.url }}" target="_blank" rel="noopener">Watch Recording</a></td>
-      <td>{{ state_chip(st) }}</td><td>{{ controls(st) }}</td></tr>
+      <td>{{ leds(st) }}</td><td>{{ controls(st) }}</td></tr>
     {% endfor %}
   </table></div>
 </section>

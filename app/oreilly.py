@@ -14,7 +14,6 @@ from app.engine import Button, Outgoing, complete_course
 from app.models import Area, Attendance, Course, CourseStep, LearningPath, LogEntry, Outcome
 
 LIST_LIMIT = 12
-ICON = {"pending": "📅", "awaiting": "⏳", "missed": "🎬", "attended": "🔁", "watched": "✓"}
 LISTS = {
     "watch": ("🎬 To watch (missed live)", lambda st: st.event_state == "missed"),
     "review": ("🔁 To review (attended)", lambda st: st.event_state == "attended"),
@@ -28,13 +27,24 @@ def _events(s: Session) -> list[CourseStep]:
     return list(s.scalars(select(CourseStep).where(CourseStep.attendance.is_not(None))))
 
 
+ATT_LED = {Attendance.ATTENDED: "🟢", Attendance.MISSED: "🔴",
+           Attendance.REGISTERED: "🟡", Attendance.WAITLISTED: "🟡"}
+
+
+def leds(st: CourseStep) -> str:
+    """Two status LEDs: attendance (🟢 attended, 🔴 missed, 🟡 registered/waitlisted),
+    then recording (🟢 watched, ⚪ not yet)."""
+    return ATT_LED[st.attendance] + ("🟢" if st.done_at else "⚪")
+
+
 def _date(st: CourseStep) -> str:
-    return f"{st.event_date.day} {st.event_date:%b %Y}" if st.event_date else "TBC"
+    d = f"{st.event_date.day} {st.event_date:%b %Y}" if st.event_date else "TBC"
+    return f"{d} {st.event_time}" if st.event_time else d
 
 
-def _short(st: CourseStep, n: int = 38) -> str:
+def _short(st: CourseStep, n: int = 34) -> str:
     title = st.title if len(st.title) <= n else st.title[: n - 1] + "…"
-    return f"{ICON[st.event_state]} {_date(st)} · {title}"
+    return f"{leds(st)} {_date(st)} · {title}"
 
 
 def home(s: Session) -> Outgoing:
@@ -43,6 +53,7 @@ def home(s: Session) -> Outgoing:
     watched = sum(1 for st in evs if st.done_at)
     text = (
         "<b>O'Reilly live events</b>\n"
+        "<i>LEDs: attendance 🟢 attended 🔴 missed 🟡 registered · recording 🟢 watched ⚪ not yet</i>\n"
         f"🎬 To watch (missed live): {count['watch']}\n"
         f"🔁 To review (attended): {count['review']}\n"
         f"📅 Upcoming: {count['upcoming']}\n"
@@ -116,10 +127,15 @@ def step(s: Session, sid: int) -> Outgoing:
         "attended": "Attended: queued for review",
         "watched": "Watched ✓",
     }[st.event_state]
+    att = {Attendance.ATTENDED: "attended", Attendance.MISSED: "missed",
+           Attendance.REGISTERED: "registered", Attendance.WAITLISTED: "waitlisted"}[st.attendance]
+    rec = "watched" if st.done_at else ("not watched" if st.url else "no recording yet")
     lines = [f"<b>{html.escape(st.title)}</b>", f"{_date(st)}"]
     if st.presenters:
         lines.append(f"<i>{html.escape(st.presenters)}</i>")
-    lines += [f"Course: {html.escape(st.course.name)}", f"Status: {state}"]
+    lines += [f"Course: {html.escape(st.course.name)}",
+              f"{ATT_LED[st.attendance]} {att}   {'🟢' if st.done_at else '⚪'} {rec}",
+              f"Status: {state}"]
 
     rows = []
     if st.url:

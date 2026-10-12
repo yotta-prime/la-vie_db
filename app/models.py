@@ -224,6 +224,7 @@ class CourseStep(Base):
 
     # Live events only (NULL for ordinary lessons). `url` holds the recording link.
     event_date: Mapped[date | None] = mapped_column(Date)
+    event_time: Mapped[str | None] = mapped_column(String(5))  # "HH:MM", UK local time
     presenters: Mapped[str | None] = mapped_column(Text)
     attendance: Mapped[Attendance | None] = mapped_column(_enum(Attendance))
     attendance_asked_at: Mapped[datetime | None] = mapped_column(UTCDateTime)

@@ -15,7 +15,8 @@ File format (see content/oreilly.yaml):
       - key, name, category, kind?, url?, notes?, daily_goal_min?
         lessons:
           - key, title, detail?, url?
-            date?, presenters?, attendance?   # live events: registered|waitlisted|attended|missed
+            date?, time?, presenters?, attendance?   # live events; time "HH:MM" UK local;
+                                                     # attendance registered|waitlisted|attended|missed
 """
 
 import logging
@@ -92,9 +93,20 @@ def _event_fields(lesson: dict) -> dict:
     attendance = lesson.get("attendance")
     return {
         "event_date": lesson.get("date"),  # YAML parses ISO dates to datetime.date
+        "event_time": _hhmm(lesson.get("time")),
         "presenters": lesson.get("presenters"),
         "attendance": Attendance(attendance) if attendance else None,
     }
+
+
+def _hhmm(value) -> str | None:
+    """`time: "17:00"`. Unquoted, YAML reads 17:00 as base-60 (1020), so accept that too."""
+    if value is None:
+        return None
+    if isinstance(value, int):
+        value = f"{value // 60:02d}:{value % 60:02d}"
+    h, m = str(value).split(":")
+    return f"{int(h):02d}:{int(m):02d}"
 
 
 def import_file(db: Database, file: Path) -> dict:

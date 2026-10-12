@@ -671,6 +671,13 @@ async def oreilly_update(request: Request, sid: int):
             st.done_at = None if st.done_at else datetime.now(timezone.utc)
         elif action == "url":
             st.url = txt(form, "url")
+        elif action == "when":
+            st.event_date = day(form, "date")
+            t = txt(form, "time")
+            try:
+                st.event_time = parse_hhmm(t).strftime("%H:%M") if t else None
+            except ValueError:
+                return back(f"/admin/oreilly#e{sid}", "Time must be HH:MM.")
         title = st.title
     return back(f"/admin/oreilly#e{sid}", f"Updated: {title}")
 

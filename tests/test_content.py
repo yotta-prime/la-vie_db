@@ -103,6 +103,21 @@ def test_reimport_adds_only_new_and_keeps_admin_edits(db, tmp_path):
         assert c.steps[-1].title == "What's Happening in Data (27 Oct)" and c.steps[-1].position == 3
 
 
+def test_event_times_quoted_or_not(db, tmp_path):
+    f = tmp_path / "times.yaml"
+    f.write_text(
+        "courses:\n"
+        "  - key: c\n    name: C\n    category: professional\n    lessons:\n"
+        "      - {key: a, title: A, date: 2026-11-02, time: \"17:00\", attendance: registered}\n"
+        "      - {key: b, title: B, date: 2026-11-03, time: 09:30, attendance: registered}\n",
+        encoding="utf-8",
+    )
+    import_file(db, f)
+    with db.session() as s:
+        times = {st.source_key: st.event_time for st in s.scalars(select(CourseStep))}
+    assert times == {"a": "17:00", "b": "09:30"}
+
+
 def test_migrates_v1_database_to_latest(tmp_path):
     """The NAS is on schema v1: no source_key columns yet."""
     path = tmp_path / "v1.db"
@@ -113,7 +128,7 @@ def test_migrates_v1_database_to_latest(tmp_path):
     for table in ("learning_path", "course", "course_step"):
         con.execute(f"DROP INDEX ix_{table}_source_key")
         con.execute(f"ALTER TABLE {table} DROP COLUMN source_key")
-    for col in ("event_date", "presenters", "attendance", "attendance_asked_at", "recording_notified_at"):
+    for col in ("event_date", "event_time", "presenters", "attendance", "attendance_asked_at", "recording_notified_at"):
         con.execute(f"ALTER TABLE course_step DROP COLUMN {col}")
     con.execute("UPDATE schema_version SET version = 1")
     con.execute("INSERT INTO course (id, position, name, category, kind, active) "
@@ -128,5 +143,5 @@ def test_migrates_v1_database_to_latest(tmp_path):
         assert s.get(Course, 1).name == "Mine" and s.get(Course, 1).source_key is None
     d.engine.dispose()
     (version,) = sqlite3.connect(path).execute("SELECT version FROM schema_version").fetchone()
-    assert version == LATEST == 3
-    assert (tmp_path / "v1.db.pre-v3.bak").exists()
+    assert version == LATEST == 4
+    assert (tmp_path / "v1.db.pre-v4.bak").exists()

@@ -338,7 +338,10 @@ class Engine:
 
     @staticmethod
     def _event_line(st: CourseStep) -> str:
-        bits = [f"{st.event_date:%a %d %b %Y}" if st.event_date else None, st.presenters]
+        when = f"{st.event_date:%a %d %b %Y}" if st.event_date else None
+        if when and st.event_time:
+            when += f" {st.event_time}"
+        bits = [when, st.presenters]
         meta = " · ".join(html.escape(b) for b in bits if b)
         return f"<b>{html.escape(st.title)}</b>" + (f"\n<i>{meta}</i>" if meta else "")
 

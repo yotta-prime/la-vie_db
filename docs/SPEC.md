@@ -1,10 +1,10 @@
-# la-vie — daily life service: v1 spec
+# la-vie â€” daily life service: v1 spec
 
 Captured from the requirements interview, 2026-10-04. Last updated 2026-10-12 (learning content files, O'Reilly import, monitoring). See **Implementation status** at the end for what's built.
 
 ## Overview
 
-A personal service running on a Synology NAS that sends Telegram prompts through the day across four areas — **movement**, **attention/focus**, **learning paths**, **hobbies** — logs responses, and reports progress. All content and selection is rule-based (no AI). Configuration is edited through a small web admin page on the home network.
+A personal service running on a Synology NAS that sends Telegram prompts through the day across four areas â€” **movement**, **attention/focus**, **learning paths**, **hobbies** â€” logs responses, and reports progress. All content and selection is rule-based (no AI). Configuration is edited through a small web admin page on the home network.
 
 ## Architecture
 
@@ -15,13 +15,13 @@ A personal service running on a Synology NAS that sends Telegram prompts through
 | Storage | SQLite on a mounted NAS volume |
 | Messaging | Telegram bot, long polling (no inbound ports needed) |
 | Admin UI | Server-rendered web page from the same FastAPI app, LAN only |
-| AI | None — fixed rules and templates |
+| AI | None â€” fixed rules and templates |
 
 ## Daily rhythm
 
-Desk job, ~9–5 on weekdays. Prompts are spread through the day:
+Desk job, ~9â€“5 on weekdays. Prompts are spread through the day:
 
-- **Weekdays**: focus intention (morning) → desk-break micro-moves (every few hours during work) → distraction check-ins (random, work hours) → movement routine and learning/hobby sessions (before/after work) → end-of-day focus reflection.
+- **Weekdays**: focus intention (morning) â†’ desk-break micro-moves (every few hours during work) â†’ distraction check-ins (random, work hours) â†’ movement routine and learning/hobby sessions (before/after work) â†’ end-of-day focus reflection.
 - **Weekends**: no work-hour prompts; movement, learning and hobby sessions only.
 - **Quiet hours** (configurable): no messages sent; anything due is dropped or deferred to the next allowed time.
 
@@ -29,23 +29,23 @@ Desk job, ~9–5 on weekdays. Prompts are spread through the day:
 
 ### Movement
 - **Named routines** defined in admin (name, duration, steps); the prompt names today's routine and lists the steps.
-- **Desk-break micro-moves**: short 2–5 min reminders at intervals during work hours.
+- **Desk-break micro-moves**: short 2â€“5 min reminders at intervals during work hours.
 - **Logging**: inline buttons Done / Partial / Skip; streaks tracked.
 
 ### Attention / focus
 - **Daily focus intention**: morning "What's your one most important thing today?"; free-text reply stored; checked back on in the evening.
 - **Focus block timer**: start a Pomodoro / deep-work block from Telegram; ping at the end; block logged.
 - **Distraction check-ins**: occasional random "What are you doing right now?" during work hours.
-- **End-of-day reflection**: rate focus 1–5 + optional note.
+- **End-of-day reflection**: rate focus 1â€“5 + optional note.
 
 ### Learning paths and courses
 - Tracked separately from hobbies.
 - A **course** is what a learning session works on. It is **professional** or **hobby**, and one of:
-  - **Lessons** — ordered list; the bot serves the next lesson; finishing the last completes the course.
-  - **Time-based goal** — e.g. 20 min/day; log minutes.
-  - **Spaced repetition** — flashcard reviews in Telegram.
-- A **learning path** groups courses (e.g. "Cloud architect" → Networking, Security). Paths are **in order** by default (only the next unfinished course is suggested) or **any order**. Courses can also stand alone as **individual courses**.
-- Courses, lessons and routines can carry **links** (course pages, recordings, YouTube, DailyOM…), shown in the prompts.
+  - **Lessons** â€” ordered list; the bot serves the next lesson; finishing the last completes the course.
+  - **Time-based goal** â€” e.g. 20 min/day; log minutes.
+  - **Spaced repetition** â€” flashcard reviews in Telegram.
+- A **learning path** groups courses (e.g. "Cloud architect" â†’ Networking, Security). Paths are **in order** by default (only the next unfinished course is suggested) or **any order**. Courses can also stand alone as **individual courses**.
+- Courses, lessons and routines can carry **links** (course pages, recordings, YouTube, DailyOMâ€¦), shown in the prompts.
 - **Professional / hobby split** is a configurable target ratio; the scheduler balances sessions toward it over each week.
 - Selected professional paths are explicitly **not linked** to any hobby.
 
@@ -79,10 +79,12 @@ Each event lesson has a date, presenters and an **attendance**: registered, wait
 | **Pending** (a) | Registered/waitlisted, not happened yet | Never offered as a lesson. The day after the event, Telegram asks **Did you attend? [Attended] [Missed]** (once; waits out quiet hours) |
 | **Awaiting recording** | Attended or missed, no link yet | Not offered. Add the link (file, admin O'Reilly page, or later email) and Telegram announces it |
 | **Attended, with recording** (b) | Completed live | Queued for **review**, after missed ones |
-| **Missed, to watch** (c) | Registered but didn't attend | Offered **first** at the learning session. When its recording arrives: **Recording ready [▶ Open] [✓ Watched]** |
+| **Missed, to watch** (c) | Registered but didn't attend | Offered **first** at the learning session. When its recording arrives: **Recording ready [â–¶ Open] [âœ“ Watched]** |
 | **Watched** | Ticked | Done; the course completes when all its lessons are |
 
 Status can be changed in three places that share the same data: the admin **O'Reilly** page (buttons per row), Telegram `/oreilly`, and the confirmation messages.
+
+Every event shows **two status LEDs**, on the page and in Telegram: **attendance** (ðŸŸ¢ attended, ðŸ”´ missed, ðŸŸ¡ registered/waitlisted) and **recording** (ðŸŸ¢ watched, âšª not yet). Watched rows stay fully readable, with no strike-through. Events have an optional **start time** (UK local, `HH:MM`), set on the O'Reilly page for upcoming events or as `time: "17:00"` in the content file.
 
 ### O'Reilly page (admin)
 `/admin/oreilly`, laid out like `oreilly_events_06-Oct-26.md`: Planned/Registered, **To watch (missed live)**, Recording not yet issued (with a field to paste the link), numbered tables per year with recording links, totals and notes, then the **O'Reilly Radar newsletter summary** (page 2 of the file, `content/oreilly_radar.md`). Each row has Attended/Missed and Watched controls.
@@ -104,13 +106,13 @@ Set in the admin page for each item:
 ## Telegram controls
 
 - Inline buttons for logging on every prompt.
-- `/pause [area|all] [until]` and `/resume` — pause mode.
-- `/log <activity> [duration]` — ad-hoc log, e.g. `/log run 30m`.
-- `/focus [minutes]` — start a focus block.
-- `/summary` — this week so far; `/status` — what's left today, pauses, streaks.
-- `/oreilly` — O'Reilly events: counts, then **To watch / Review / Upcoming / Awaiting** lists and **Paths & courses**, down to each lesson with **▶ Open recording**, **✓ Watched** and **Attended / Missed** buttons. One message, updated in place.
-- `/health` — version and connection check; `/help`; `/ping`.
-- On every start the bot sends **"la-vie started, version …"**.
+- `/pause [area|all] [until]` and `/resume` â€” pause mode.
+- `/log <activity> [duration]` â€” ad-hoc log, e.g. `/log run 30m`.
+- `/focus [minutes]` â€” start a focus block.
+- `/summary` â€” this week so far; `/status` â€” what's left today, pauses, streaks.
+- `/oreilly` â€” O'Reilly events: counts, then **To watch / Review / Upcoming / Awaiting** lists and **Paths & courses**, down to each lesson with **â–¶ Open recording**, **âœ“ Watched** and **Attended / Missed** buttons. One message, updated in place.
+- `/health` â€” version and connection check; `/help`; `/ping`.
+- On every start the bot sends **"la-vie started, version â€¦"**.
 - Quiet hours enforced server-side.
 - Bot only answers the owner's Telegram chat ID.
 
@@ -133,7 +135,7 @@ At **http://192.168.0.198:8080/admin** (generally `http://<nas-ip>:8080/admin`),
 
 ## Data model (sketch)
 
-`routine` (+ url, notes), `routine_step` (+ url), `micro_move`, `learning_path` (category, sequential, source_key), `course` (path, position, category, kind, goal, url, completed, source_key), `course_step` (url, done, source_key; live events: event_date, presenters, attendance, attendance_asked_at, recording_notified_at), `flashcard` (+ SRS state), `hobby`, `hobby_project` (url, notes, `requires_course_id` / `requires_path_id`, done), `schedule_rule` (course or hobby; method, sessions/week, weekdays, start/end, weight), `prompt` (sent, due, status), `log_entry` (area, item, outcome, duration, rating, note), `setting`, `schema_version` (currently **3**: v1 courses/projects, v2 source keys, v3 live-event fields).
+`routine` (+ url, notes), `routine_step` (+ url), `micro_move`, `learning_path` (category, sequential, source_key), `course` (path, position, category, kind, goal, url, completed, source_key), `course_step` (url, done, source_key; live events: event_date, event_time, presenters, attendance, attendance_asked_at, recording_notified_at), `flashcard` (+ SRS state), `hobby`, `hobby_project` (url, notes, `requires_course_id` / `requires_path_id`, done), `schedule_rule` (course or hobby; method, sessions/week, weekdays, start/end, weight), `prompt` (sent, due, status), `log_entry` (area, item, outcome, duration, rating, note), `setting`, `schema_version` (currently **4**: v1 courses/projects, v2 source keys, v3 live-event fields, v4 event time).
 
 ## v1 scope
 
@@ -150,14 +152,14 @@ All times are editable in the admin page.
   |---|---|
   | 06:30 | Movement routine |
   | 08:00 | Focus intention |
-  | 09:00–17:00, hourly | Desk-break micro-moves |
-  | 2× random, work hours | Distraction check-ins |
+  | 09:00â€“17:00, hourly | Desk-break micro-moves |
+  | 2Ã— random, work hours | Distraction check-ins |
   | 17:30 | Learning session |
   | 19:00 | Hobby session |
   | 20:30 | Focus reflection |
 
 - **Weekends**: movement, learning and hobby prompts only, at the same times.
-- **Quiet hours**: 21:00–06:00.
+- **Quiet hours**: 21:00â€“06:00.
 - **Weekly summary**: Sunday 18:00.
 - **Spaced repetition**: FSRS (e.g. the `fsrs` Python package), with Again / Hard / Good / Easy buttons.
 - **Backups**: nightly SQLite online backup (`sqlite3` backup API) at 03:00 to a `backups/` folder, keeping 14, covered by Hyper Backup / Snapshot Replication.

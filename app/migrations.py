@@ -76,10 +76,20 @@ def _m003_events(cur: sqlite3.Cursor, engine: Engine) -> None:
     cur.execute("UPDATE course_step SET recording_notified_at = CURRENT_TIMESTAMP WHERE url IS NOT NULL")
 
 
+def _m004_event_time(cur: sqlite3.Cursor, engine: Engine) -> None:
+    """Start time for live events ("HH:MM", UK local)."""
+    if not cur.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='course_step'").fetchone():
+        return
+    cols = {row[1] for row in cur.execute("PRAGMA table_info(course_step)")}
+    if "event_time" not in cols:  # absent when coming from v3; create_all adds it from v0
+        cur.execute("ALTER TABLE course_step ADD COLUMN event_time VARCHAR(5)")
+
+
 MIGRATIONS: list[tuple[int, Callable[[sqlite3.Cursor, Engine], None]]] = [
     (1, _m001_courses),
     (2, _m002_source_keys),
     (3, _m003_events),
+    (4, _m004_event_time),
 ]
 LATEST = MIGRATIONS[-1][0]
 

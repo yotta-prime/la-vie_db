@@ -42,8 +42,8 @@ def test_home_counts_and_navigation(engine):
     assert {"o:watch", "o:review", "o:upcoming", "o:awaiting", "o:paths"} <= set(data(msg))
 
     _, up = engine.oreilly("o:upcoming", NOW)
-    assert labels(up)[0].startswith("📅 8 Oct 2026 · Claude Certified")
-    assert labels(up)[-2].startswith("📅 TBC · Architectural Katas 2026")
+    assert labels(up)[0].startswith("🟡⚪ 8 Oct 2026 · Claude Certified")
+    assert labels(up)[-2].startswith("🟡⚪ TBC · Architectural Katas")
 
     _, review = engine.oreilly("o:review", NOW)
     assert "Showing the 12" in review.text and len(review.buttons) == 13  # 12 + back
@@ -90,6 +90,26 @@ def test_course_completes_when_last_lesson_watched(engine):
         s.get(CourseStep, sid).url = "https://example.org/linux"
     toast, _ = engine.oreilly(f"o:set:{sid}:watched", NOW)
     assert "Course complete: Linux administration" in toast
+
+
+def test_leds_and_times(engine):
+    sid = _sid(engine, "oreilly-2026-10-13-agent-memory")
+    with engine.db.session() as s:
+        s.get(CourseStep, sid).event_time = "17:00"
+    _, lesson = engine.oreilly(f"o:step:{sid}", NOW)
+    assert "13 Oct 2026 17:00" in lesson.text and "🟡 registered   ⚪ no recording yet" in lesson.text
+
+    tdd = _sid(engine, "oreilly-2026-09-30-ai-assisted-tdd")
+    engine.oreilly(f"o:set:{tdd}:watched", NOW)
+    _, lesson = engine.oreilly(f"o:step:{tdd}", NOW)
+    assert "🟢 attended   🟢 watched" in lesson.text
+    _, course = engine.oreilly(f"o:course:{_course_id(engine, tdd)}", NOW)
+    assert labels(course)[0].startswith("🟢🟢 30 Sep 2026")
+
+
+def _course_id(engine, sid):
+    with engine.db.session() as s:
+        return s.get(CourseStep, sid).course_id
 
 
 def test_bot_registers_oreilly_and_link_buttons():
