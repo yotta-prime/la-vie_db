@@ -1,0 +1,22 @@
+# Monthly pull requests for dependency updates, grouped so there's one PR per kind.
+# CI runs the tests on each; merging one deploys it to the NAS like any other commit.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      python:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
