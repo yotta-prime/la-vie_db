@@ -9,6 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY content ./content
 
 # Run as a non-root user; deploy/install.sh gives this UID ownership of the data folder.
 RUN useradd --uid 1000 --no-create-home --shell /usr/sbin/nologin app

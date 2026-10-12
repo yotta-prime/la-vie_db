@@ -17,6 +17,7 @@ Personal daily-life service: Telegram prompts for movement, focus, learning path
 - Reachable from your home network only: keep port 8080 closed on the router.
 - Sign in with `ADMIN_PASSWORD` from the NAS secrets file (`/volume1/docker/lavie/secrets/.env`); the admin page stays locked until it's set. Sign-in lasts 30 days per browser. To set or change the password, see [docs/DEPLOY.md](docs/DEPLOY.md) step 7.
 - Running locally, it's at http://localhost:8000/admin, using `ADMIN_PASSWORD` from your local `.env`.
+- Learning paths can also come from files: `content/*.yaml` (e.g. `content/oreilly.yaml`, the O'Reilly live events) is loaded at startup. Import only adds new items, so changes made in the admin page are kept.
 
 ## Run locally
 

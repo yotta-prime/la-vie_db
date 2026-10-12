@@ -164,6 +164,8 @@ class LearningPath(Base):
     description: Mapped[str | None] = mapped_column(Text)
     sequential: Mapped[bool] = mapped_column(default=True)
     active: Mapped[bool] = mapped_column(default=True)
+    # Set on items loaded from content/*.yaml, so re-imports recognise them (app/content.py).
+    source_key: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
 
     courses: Mapped[list["Course"]] = relationship(
         back_populates="path", order_by="Course.position"
@@ -188,6 +190,7 @@ class Course(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(default=True)
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    source_key: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
 
     path: Mapped[LearningPath | None] = relationship(back_populates="courses")
     steps: Mapped[list["CourseStep"]] = relationship(
@@ -208,6 +211,7 @@ class CourseStep(Base):
     detail: Mapped[str | None] = mapped_column(Text)
     url: Mapped[str | None] = mapped_column(String(500))
     done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    source_key: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
 
     course: Mapped[Course] = relationship(back_populates="steps")
 

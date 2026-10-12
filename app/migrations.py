@@ -50,8 +50,19 @@ def _m001_courses(cur: sqlite3.Cursor, engine: Engine) -> None:
     # New tables (course, course_step, hobby_project, ...) are created by create_all afterwards.
 
 
+def _m002_source_keys(cur: sqlite3.Cursor, engine: Engine) -> None:
+    """Stable keys for paths, courses and lessons loaded from content/*.yaml."""
+    for table in ("learning_path", "course", "course_step"):
+        exists = cur.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone()
+        if not exists:  # coming from v0: migration 1 left it for create_all, which adds the column
+            continue
+        cur.execute(f"ALTER TABLE {table} ADD COLUMN source_key VARCHAR(100)")
+        cur.execute(f"CREATE UNIQUE INDEX ix_{table}_source_key ON {table} (source_key)")
+
+
 MIGRATIONS: list[tuple[int, Callable[[sqlite3.Cursor, Engine], None]]] = [
     (1, _m001_courses),
+    (2, _m002_source_keys),
 ]
 LATEST = MIGRATIONS[-1][0]
 

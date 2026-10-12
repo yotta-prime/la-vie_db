@@ -105,7 +105,7 @@ def test_migrates_v0_database_keeping_logs(tmp_path):
         s.add(Course(name="New", category=Category.PROFESSIONAL))
     d.engine.dispose()
 
-    assert (tmp_path / "old.db.pre-v1.bak").exists()
+    assert (tmp_path / f"old.db.pre-v{LATEST}.bak").exists()
     (version,) = sqlite3.connect(path).execute("SELECT version FROM schema_version").fetchone()
     assert version == LATEST
 
