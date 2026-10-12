@@ -1,6 +1,10 @@
 #!/bin/sh
 # Pull the latest main from GitHub and redeploy if anything changed.
-# Run as root from DSM Task Scheduler (see docs/DEPLOY.md). Pass --force to redeploy anyway.
+# Run as root from DSM Task Scheduler (see docs/DEPLOY.md). Pass --force to redeploy anyway
+# (this also skips the GitHub test check).
+#
+# A new commit is deployed only once its GitHub Actions tests have passed. Failed tests, a
+# failed build, or a new version that doesn't answer /health are sent to you in Telegram.
 #
 # Everything runs inside main(), and the last line calls it and exits. The shell reads a
 # script as it goes, and `git reset` below replaces this very file; wrapping it this way
@@ -63,12 +67,78 @@ main() {
         fi
     fi
 
-    log "deploying $(git rev-parse --short origin/main) (was $(git rev-parse --short HEAD))"
+    # Deploy only commits whose tests passed on GitHub (.github/workflows/test.yml).
+    if [ "${1:-}" != "--force" ] && [ "$local_rev" != "$remote_rev" ]; then
+        case "$(ci_result "$remote_rev")" in
+            success) ;;
+            failure)
+                once "$remote_rev failure" && {
+                    log "not deploying $(short "$remote_rev"): tests failed on GitHub"
+                    notify "⚠️ la-vie: tests failed on GitHub for $(short "$remote_rev"); the NAS stays on $(short "$local_rev")."
+                }
+                exit 0 ;;
+            *)
+                once "$remote_rev pending" && log "waiting for GitHub tests on $(short "$remote_rev")"
+                exit 0 ;;
+        esac
+    fi
+
+    log "deploying $(short "$remote_rev") (was $(short "$local_rev"))"
     git reset --hard --quiet origin/main
-    export LAVIE_VERSION="$(git rev-parse --short HEAD)"
-    compose up -d --build --remove-orphans
+    LAVIE_VERSION=$(git rev-parse --short HEAD)
+    export LAVIE_VERSION
+    if ! compose up -d --build --remove-orphans; then
+        log "deploy failed"
+        notify "⚠️ la-vie: deploy of $LAVIE_VERSION failed on the NAS. See logs/update.log."
+        exit 1
+    fi
     docker image prune -f >/dev/null
-    log "deployed"
+
+    # Confirm the new version answers (the app also says "la-vie started" in Telegram).
+    i=0
+    while [ $i -lt 24 ]; do
+        if curl -fsS --max-time 5 http://localhost:8080/health 2>/dev/null | grep -q "\"$LAVIE_VERSION\""; then
+            log "deployed"
+            return 0
+        fi
+        i=$((i + 1))
+        sleep 5
+    done
+    log "deployed $LAVIE_VERSION but /health didn't confirm it within 2 minutes"
+    notify "⚠️ la-vie: deployed $LAVIE_VERSION but /health didn't answer with it within 2 minutes."
+}
+
+short() { echo "$1" | cut -c1-7; }
+
+# GitHub Actions result for a commit: success, failure or pending (also if GitHub can't be asked).
+ci_result() {
+    runs=$(curl -fsS --max-time 20 -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/yotta-prime/la-vie_db/actions/workflows/test.yml/runs?head_sha=$1" \
+        2>/dev/null) || { echo pending; return; }
+    if echo "$runs" | grep -q '"conclusion": *"success"'; then
+        echo success
+    elif echo "$runs" | grep -qE '"conclusion": *"(failure|cancelled|timed_out)"'; then
+        echo failure
+    else
+        echo pending
+    fi
+}
+
+# True the first time it's called with a given key, so a waiting or failed commit is
+# logged and alerted once rather than every 15 minutes.
+once() {
+    state="$BASE/logs/ci-state"
+    [ -f "$state" ] && [ "$(cat "$state")" = "$1" ] && return 1
+    echo "$1" > "$state"
+}
+
+# Telegram message to the owner, using the bot's own settings. Never fails the script.
+notify() {
+    token=$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' "$LAVIE_ENV_FILE" | tr -d '"\r')
+    chat=$(sed -n 's/^TELEGRAM_OWNER_CHAT_ID=//p' "$LAVIE_ENV_FILE" | tr -d '"\r')
+    [ -n "$token" ] && [ -n "$chat" ] || return 0
+    curl -fsS --max-time 15 -o /dev/null "https://api.telegram.org/bot$token/sendMessage" \
+        --data-urlencode "chat_id=$chat" --data-urlencode "text=$1" || true
 }
 
 # Times include the zone so they read unambiguously whatever DSM's time zone is.
