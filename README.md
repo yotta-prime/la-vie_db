@@ -1,23 +1,61 @@
 # la-vie_db
 
-Personal daily-life service: Telegram prompts for movement, focus, learning paths and hobbies, running in Docker on a Synology NAS. See [docs/SPEC.md](docs/SPEC.md).
+Personal daily-life service: Telegram prompts for movement, focus, learning paths and hobbies, running in Docker on a Synology NAS. What it does: [docs/SPEC.md](docs/SPEC.md). How it's deployed and run: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Setup
 
 1. **Create the bot**: in Telegram, message `@BotFather`, send `/newbot`, and copy the token.
 2. **Configure**: copy `.env.example` to `.env` and set `TELEGRAM_BOT_TOKEN`.
 3. **Start** (locally or on the NAS, see below).
-4. **Claim the bot**: send `/start` to your bot. It replies with your chat ID. Put it in `.env` as `TELEGRAM_OWNER_CHAT_ID` and restart. After that, the bot only answers you. `/ping` should reply `pong`.
+4. **Claim the bot**: send `/start` to your bot. It replies with your chat ID, a number. Put it in `.env` as `TELEGRAM_OWNER_CHAT_ID` and restart. After that, the bot only answers you. `/ping` should reply `pong`.
 
 ## Admin page
 
 **http://192.168.0.198:8080/admin** (on the NAS; generally `http://<nas-ip>:8080/admin`)
 
-- Edit routines and their video links, micro-moves, learning paths, courses and lessons, hobbies and projects, dependencies, schedules and settings. The **Today** page shows the day's prompts.
+- Edit routines and their video links, micro-moves, learning paths, courses and lessons, flashcards, hobbies and projects, dependencies, schedules and settings. The **Today** page shows the day's prompts and can re-plan the rest of the day after a settings change.
 - Reachable from your home network only: keep port 8080 closed on the router.
 - Sign in with `ADMIN_PASSWORD` from the NAS secrets file (`/volume1/docker/lavie/secrets/.env`); the admin page stays locked until it's set. Sign-in lasts 30 days per browser. To set or change the password, see [docs/DEPLOY.md](docs/DEPLOY.md) step 7.
 - Running locally, it's at http://localhost:8000/admin, using `ADMIN_PASSWORD` from your local `.env`.
-- Learning paths can also come from files: `content/*.yaml` (e.g. `content/oreilly.yaml`, the O'Reilly live events) is loaded at startup. Import only adds new items, so changes made in the admin page are kept.
+- Styling: the "Industry" theme, inlined in `app/admin/templates/base.html`; reference stylesheets in [docs/design/industry](docs/design/industry).
+
+## Learning content from files
+
+Besides the admin page, learning paths, courses and lessons can be kept in `content/*.yaml`, which the app loads every time it starts (so after every deploy).
+
+- **`content/oreilly.yaml`**: O'Reilly live events, from `oreilly_events_06-Oct-26.md`: 3 paths, 10 courses, 52 lessons, with recording links. Lessons are newest first, upcoming events last, and all queued for review.
+- **Add-only import.** Each path, course and lesson has a unique `key`. An item is created the first time its key appears; after that, the only change import makes is **filling in a link** the item doesn't have yet. Renames, reordering, ticks and links set in the admin page are never overwritten.
+- **Add an event**: append a lesson with a new `key`, `title`, `detail` and optional `url`, then push. It's added at the end of its course.
+- **Add a recording link later**: add `url:` to that lesson and push; the NAS fills it in.
+- **Remove an item**: delete it in the admin page *and* from the file (otherwise it's re-created on the next start).
+
+Format (see the top of `content/oreilly.yaml` and `app/content.py`):
+
+```yaml
+paths:
+  - key: my-path
+    name: Cloud architect
+    category: professional        # or hobby
+    sequential: false             # true: only the next unfinished course is suggested
+    courses:
+      - key: my-course
+        name: Networking
+        url: https://...
+        lessons:
+          - key: my-lesson-1
+            title: Subnets
+            detail: Presenter · date
+            url: https://...
+courses: []                       # individual courses, same shape as above plus category
+```
+
+The repo is public, so anything in `content/` is published.
+
+## Telegram commands
+
+`/status` (what's left today, pauses, streaks) · `/summary` (this week so far; sent automatically on Sunday evening) · `/focus [min]` · `/log <what> [duration]` · `/pause [area|all] [duration]` · `/resume [area]` · `/health` (version and connection check) · `/help` · `/ping`
+
+The bot also sends **"la-vie started, version …"** whenever it starts, e.g. after each deploy.
 
 ## Run locally
 
@@ -30,6 +68,8 @@ python -m venv .venv
 
 Health check: http://localhost:8000/health
 
+The tests read your local `.env`. If `TELEGRAM_OWNER_CHAT_ID` there isn't a number (it must be your numeric chat ID, not the bot's username), the bot tests fail. Fix the value, or run with `$env:TELEGRAM_OWNER_CHAT_ID = "1"` set.
+
 ## Deploy on Synology
 
-The NAS pulls `main` from GitHub every 15 minutes and redeploys on changes; secrets live outside the repo, readable only by root. Full steps: [docs/DEPLOY.md](docs/DEPLOY.md).
+The NAS pulls `main` from GitHub every 15 minutes and redeploys on changes; secrets live outside the repo, readable only by root. `http://192.168.0.198:8080/health` shows the deployed commit (`version`) and whether the bot is talking to Telegram (`polling`, `last_poll_seconds_ago`). Full steps, monitoring and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md).

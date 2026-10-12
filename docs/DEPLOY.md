@@ -144,7 +144,8 @@ The bot also sends **"la-vie started, version …"** to your chat whenever it st
 
 ## Day to day
 
-- **Ship a change**: push or merge to `main`; it's live within 15 minutes.
+- **Ship a change**: push or merge to `main`; it's live within 15 minutes. Check from any PC on the LAN: `http://192.168.0.198:8080/health` shows the deployed commit as `version`, and Telegram gets "la-vie started, version …".
+- **Learning content**: edit `content/*.yaml` (e.g. add an O'Reilly event or a recording link) and push. The app imports it on start: new items are added and missing links filled in, without touching admin-page edits. The container log shows `Imported oreilly.yaml: … added; … links filled in`.
 - **Deploy now**: Task Scheduler → `lavie update` → Run. Or over SSH: `sudo sh .../update.sh --force`.
 - **Logs**: Container Manager → Container → `lavie` → Log. Deploy history is in `logs/update.log`.
 - **Is the bot still talking to Telegram?** `/health` shows `polling` and `last_poll_seconds_ago` (normally under 10). It returns `"status": "stale"` (HTTP 503) after 2 minutes without a successful poll, and Container Manager then shows `lavie` as **unhealthy**. After 10 minutes the app restarts itself; look for `No successful Telegram poll` in the log.
