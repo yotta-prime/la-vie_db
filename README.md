@@ -70,8 +70,17 @@ python -m venv .venv
 
 Health check: http://localhost:8000/health
 
-The tests read your local `.env`. If `TELEGRAM_OWNER_CHAT_ID` there isn't a number (it must be your numeric chat ID, not the bot's username), the bot tests fail. Fix the value, or run with `$env:TELEGRAM_OWNER_CHAT_ID = "1"` set.
+The tests ignore your local `.env`. GitHub runs them on every push (`.github/workflows/test.yml`), and the NAS deploys a commit only after they pass.
+
+**Dependencies**: list top-level packages in `requirements.in`; `requirements.txt` holds the exact versions the image installs. After changing `requirements.in`, regenerate it:
+
+```powershell
+.\.venv\Scripts\python -m pip install uv
+.\.venv\Scripts\python -m uv pip compile requirements.in --universal --python-version 3.12 -o requirements.txt
+```
+
+Dependabot opens monthly pull requests for Python packages, the base image and GitHub Actions; CI tests each one before you merge.
 
 ## Deploy on Synology
 
-The NAS pulls `main` from GitHub every 15 minutes and redeploys on changes; secrets live outside the repo, readable only by root. `http://192.168.0.198:8080/health` shows the deployed commit (`version`) and whether the bot is talking to Telegram (`polling`, `last_poll_seconds_ago`). Full steps, monitoring and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md).
+The NAS pulls `main` from GitHub every 15 minutes and redeploys on changes once GitHub's tests have passed (failures are sent to Telegram); secrets live outside the repo, readable only by root. `http://192.168.0.198:8080/health` shows the deployed commit (`version`) and whether the bot is talking to Telegram (`polling`, `last_poll_seconds_ago`). Full steps, monitoring and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md).

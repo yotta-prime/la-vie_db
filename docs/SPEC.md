@@ -182,3 +182,5 @@ All times are editable in the admin page.
 | Outside heartbeat (healthchecks.io) | Built; not yet configured on the NAS |
 | Flashcard reviews in Telegram (FSRS) | Not built: flashcard courses show a placeholder |
 | CSV export | Not built |
+| CI: tests on every push; NAS deploys only passing commits; Telegram alerts for failed tests/deploys | Built |
+| Reproducible builds: exact dependency versions, base image pinned by digest, Dependabot | Built |
