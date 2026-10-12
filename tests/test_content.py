@@ -21,7 +21,7 @@ def db(tmp_path):
 
 
 def test_oreilly_file_matches_approved_allocation(db):
-    assert import_file(db, OREILLY) == {"paths": 3, "courses": 10, "lessons": 52}
+    assert import_file(db, OREILLY) == {"paths": 3, "courses": 10, "lessons": 52, "links": 0}
     with db.session() as s:
         paths = {p.name: [c.name for c in p.courses] for p in s.scalars(select(LearningPath))}
         assert paths == {
@@ -42,11 +42,35 @@ def test_oreilly_file_matches_approved_allocation(db):
         assert agents.steps[-1].title == "Expert Showcase: Agent Memory"  # upcoming last
 
 
-def test_no_personal_links_published():
-    text = OREILLY.read_text(encoding="utf-8")
-    assert "click.et.oreilly.com" not in text
-    urls = {c.get("url") for p in yaml.safe_load(text)["paths"] for c in p["courses"]}
-    assert urls == {"https://learning.oreilly.com/"}
+def test_recording_links(db):
+    import_file(db, OREILLY)
+    with db.session() as s:
+        steps = s.scalars(select(CourseStep)).all()
+        linked = [st for st in steps if st.url]
+        assert len(linked) == 43  # every attended event with a recording; pending/upcoming have none
+        assert all(st.url.startswith(("https://click.et.oreilly.com/", "https://learning.oreilly.com/"))
+                   for st in linked)
+        unlinked = {st.title for st in steps if not st.url}
+        assert "Expert Showcase: Agent Memory" in unlinked and "Linux Administration" in unlinked
+        tdd = s.scalar(select(CourseStep).where(CourseStep.source_key == "oreilly-2026-09-30-ai-assisted-tdd"))
+        assert tdd.url.startswith("https://click.et.oreilly.com/?qs=ABB7InYiOjEsImQiOjUwMTZ9")
+
+
+def test_links_filled_into_existing_lessons_but_never_overwritten(db, tmp_path):
+    """The NAS imported the file before links were added: re-import must fill them in."""
+    import_file(db, OREILLY)
+    with db.session() as s:
+        for st in s.scalars(select(CourseStep)):
+            st.url = None
+        s.scalar(select(CourseStep).where(CourseStep.source_key == "oreilly-2026-09-17-vibe-vs-spec")).url = \
+            "https://example.org/mine"
+
+    counts = import_file(db, OREILLY)
+    assert counts == {"paths": 0, "courses": 0, "lessons": 0, "links": 42}
+    with db.session() as s:
+        mine = s.scalar(select(CourseStep).where(CourseStep.source_key == "oreilly-2026-09-17-vibe-vs-spec"))
+        assert mine.url == "https://example.org/mine"
+        assert len([st for st in s.scalars(select(CourseStep)) if st.url]) == 43
 
 
 def test_keys_are_unique():
@@ -64,14 +88,14 @@ def test_reimport_adds_only_new_and_keeps_admin_edits(db, tmp_path):
         c.name = "Data (renamed in admin)"
         c.steps[0].done_at = utcnow()
 
-    assert import_file(db, OREILLY) == {"paths": 0, "courses": 0, "lessons": 0}
+    assert import_file(db, OREILLY) == {"paths": 0, "courses": 0, "lessons": 0, "links": 0}
 
     extra = tmp_path / "extra.yaml"
     extra.write_text(yaml.safe_dump({"courses": [{
         "key": "oreilly-data", "name": "Data", "category": "professional",
         "lessons": [{"key": "oreilly-2026-10-27-data", "title": "What's Happening in Data (27 Oct)"}],
     }]}), encoding="utf-8")
-    assert import_file(db, extra) == {"paths": 0, "courses": 0, "lessons": 1}
+    assert import_file(db, extra) == {"paths": 0, "courses": 0, "lessons": 1, "links": 0}
 
     with db.session() as s:
         c = s.scalar(select(Course).where(Course.source_key == "oreilly-data"))

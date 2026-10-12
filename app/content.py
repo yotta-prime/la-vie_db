@@ -1,7 +1,8 @@
 """Load learning content from content/*.yaml into the database at startup.
 
-Add-only: an item is created the first time its `key` is seen and never touched again, so
-renames, reordering, completions and deletions made in the admin page are kept. (A deleted
+Add-only: an item is created the first time its `key` is seen. After that, the only change
+import makes is filling in a `url` the item doesn't have yet (e.g. a recording issued later);
+renames, reordering, completions, links and deletions made in the admin page are kept. (A deleted
 item whose key is still in the file comes back on the next start; remove it from the file
 too.) New lessons are appended to the end of their course.
 
@@ -53,9 +54,18 @@ def _course(s: Session, data: dict, path: LearningPath | None, counts: dict) -> 
         s.add(course)
         s.flush()
         counts["courses"] += 1
+    elif course.url is None and data.get("url"):
+        course.url = data["url"]
+        counts["links"] += 1
 
     for lesson in data.get("lessons", []):
-        if _by_key(s, CourseStep, lesson["key"]) is not None:
+        step = _by_key(s, CourseStep, lesson["key"])
+        if step is not None:
+            # Fill in a link the item doesn't have yet (e.g. a recording issued later);
+            # never overwrite one set in the admin page.
+            if step.url is None and lesson.get("url"):
+                step.url = lesson["url"]
+                counts["links"] += 1
             continue
         course.steps.append(
             CourseStep(
@@ -71,7 +81,7 @@ def _course(s: Session, data: dict, path: LearningPath | None, counts: dict) -> 
 
 def import_file(db: Database, file: Path) -> dict:
     data = yaml.safe_load(file.read_text(encoding="utf-8")) or {}
-    counts = {"paths": 0, "courses": 0, "lessons": 0}
+    counts = {"paths": 0, "courses": 0, "lessons": 0, "links": 0}
     with db.session() as s:
         for p in data.get("paths", []):
             path = _by_key(s, LearningPath, p["key"])
@@ -104,5 +114,5 @@ def import_content(db: Database, content_dir: Path = CONTENT_DIR) -> None:
             log.exception("Content import failed for %s; skipped", file.name)
             continue
         if any(counts.values()):
-            log.info("Imported %s: %d paths, %d courses, %d lessons added",
-                     file.name, counts["paths"], counts["courses"], counts["lessons"])
+            log.info("Imported %s: %d paths, %d courses, %d lessons added; %d links filled in",
+                     file.name, counts["paths"], counts["courses"], counts["lessons"], counts["links"])
