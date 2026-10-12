@@ -144,6 +144,7 @@ The bot also sends **"la-vie started, version …"** to your chat whenever it st
 
 ## Day to day
 
+- **"Container lavie stopped unexpectedly" emails**: DSM sends these for *any* container stop it didn't start itself, including our own deploys, so each app deploy triggers one. To keep them rare, `update.sh` only restarts the container when something that goes into it changed (`app/`, `content/`, `Dockerfile`, `docker-compose.yml`, `requirements.txt`); docs-only commits just update the repo copy and log `updated repo to … (container not restarted)`. To stop them entirely, turn off that notification in **Control Panel → Notification → Rules** (Container Manager → container stopped unexpectedly) and rely on the outside heartbeat (step 8) for real outages. Set up step 8 first.
 - **Ship a change**: push or merge to `main`; it's live within 15 minutes. Check from any PC on the LAN: `http://192.168.0.198:8080/health` shows the deployed commit as `version`, and Telegram gets "la-vie started, version …".
 - **Learning content**: edit `content/*.yaml` (e.g. add an O'Reilly event or a recording link) and push. The app imports it on start: new items are added and missing links filled in, without touching admin-page edits. The container log shows `Imported oreilly.yaml: … added; … links filled in`.
 - **Deploy now**: Task Scheduler → `lavie update` → Run. Or over SSH: `sudo sh .../update.sh --force`.

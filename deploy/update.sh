@@ -51,6 +51,18 @@ main() {
         exit 0
     fi
 
+    # Only rebuild/restart when something that goes into the container changed. Every restart
+    # makes DSM email "container stopped unexpectedly", so docs-only commits just update the
+    # repo copy. (/health keeps reporting the last *deployed* commit in that case.)
+    if [ -n "$running" ] && [ "${1:-}" != "--force" ] && [ "$local_rev" != "$remote_rev" ]; then
+        if ! git diff --name-only "$local_rev" "$remote_rev" \
+            | grep -qE '^(app/|content/|Dockerfile|docker-compose\.yml|requirements\.txt|\.dockerignore)'; then
+            git reset --hard --quiet origin/main
+            log "updated repo to $(git rev-parse --short HEAD) (no app changes; container not restarted)"
+            exit 0
+        fi
+    fi
+
     log "deploying $(git rev-parse --short origin/main) (was $(git rev-parse --short HEAD))"
     git reset --hard --quiet origin/main
     export LAVIE_VERSION="$(git rev-parse --short HEAD)"
