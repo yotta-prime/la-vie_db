@@ -66,10 +66,10 @@
   .led { width: 10px; height: 10px; border-radius: 50%; display: inline-block;
          box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 25%, transparent); }
   .led-attended, .led-on { background: #3f9c5f; box-shadow: 0 0 5px #3f9c5f; }
-  .led-missed { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
-  .led-registered, .led-waitlisted { background: #d6a23a; box-shadow: 0 0 5px #d6a23a; }
+  .led-missed { background: #e8772e; box-shadow: 0 0 5px #e8772e; }  /* orange: red is kept for time-bound items */
+  .led-registered, .led-waitlisted { background: #e6c83a; box-shadow: 0 0 5px #e6c83a; }
   .led-waitlisted { opacity: .55; }
-  .led-off { background: transparent; }
+  .led-off { background: #9a9da3; box-shadow: none; }
   .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
   .legend span { display: inline-flex; gap: 6px; align-items: center; }
   .totals { font-weight: 600; }

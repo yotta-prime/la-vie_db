@@ -27,12 +27,12 @@ def _events(s: Session) -> list[CourseStep]:
     return list(s.scalars(select(CourseStep).where(CourseStep.attendance.is_not(None))))
 
 
-ATT_LED = {Attendance.ATTENDED: "🟢", Attendance.MISSED: "🔴",
+ATT_LED = {Attendance.ATTENDED: "🟢", Attendance.MISSED: "🟠",
            Attendance.REGISTERED: "🟡", Attendance.WAITLISTED: "🟡"}
 
 
 def leds(st: CourseStep) -> str:
-    """Two status LEDs: attendance (🟢 attended, 🔴 missed, 🟡 registered/waitlisted),
+    """Two status LEDs: attendance (🟢 attended, 🟠 missed, 🟡 registered/waitlisted),
     then recording (🟢 watched, ⚪ not yet)."""
     return ATT_LED[st.attendance] + ("🟢" if st.done_at else "⚪")
 
@@ -53,7 +53,7 @@ def home(s: Session) -> Outgoing:
     watched = sum(1 for st in evs if st.done_at)
     text = (
         "<b>O'Reilly live events</b>\n"
-        "<i>LEDs: attendance 🟢 attended 🔴 missed 🟡 registered · recording 🟢 watched ⚪ not yet</i>\n"
+        "<i>LEDs: attendance 🟢 attended 🟠 missed 🟡 registered · recording 🟢 watched ⚪ not yet</i>\n"
         f"🎬 To watch (missed live): {count['watch']}\n"
         f"🔁 To review (attended): {count['review']}\n"
         f"📅 Upcoming: {count['upcoming']}\n"

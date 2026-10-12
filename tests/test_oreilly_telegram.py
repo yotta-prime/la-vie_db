@@ -106,6 +106,10 @@ def test_leds_and_times(engine):
     _, course = engine.oreilly(f"o:course:{_course_id(engine, tdd)}", NOW)
     assert labels(course)[0].startswith("🟢🟢 30 Sep 2026")
 
+    exam = _sid(engine, "oreilly-2026-10-08-claude-exam-prep")
+    _, lesson = engine.oreilly(f"o:set:{exam}:missed", NOW)
+    assert "🟠 missed" in lesson.text and "🔴" not in lesson.text  # red is kept for time-bound items
+
 
 def _course_id(engine, sid):
     with engine.db.session() as s:
