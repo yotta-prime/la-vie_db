@@ -9,7 +9,7 @@ import hashlib
 import hmac
 import re
 import time as _time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
@@ -18,9 +18,11 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 
+from app import progress
 from app.config import get_settings
 from app.engine import complete_course
 from app.models import (
+    Area,
     Attendance,
     Category,
     Course,
@@ -202,6 +204,50 @@ async def dashboard(request: Request):
         }
         rows = [(p.scheduled_for.astimezone(eng.tz).strftime("%H:%M"), p.kind.replace("_", " "), p.status.value) for p in prompts]
     return render(request, "dashboard.html", prompts=rows, counts=counts, today=today)
+
+
+# --- answers and trends -------------------------------------------------------------
+
+ANSWER_SPANS = {"7": 7, "14": 14, "30": 30, "90": 90}
+
+
+@router.get("/answers")
+async def answers_page(request: Request, days: str = "14", area: str = ""):
+    eng = request.app.state.engine
+    now = datetime.now(timezone.utc)
+    n = ANSWER_SPANS.get(days, 14)
+    start, _ = local_day_bounds(eng.today(now) - timedelta(days=n - 1), eng.tz)
+    chosen = Area(area) if area in {a.value for a in Area} else None
+    with _db(request).session() as s:
+        items = progress.answers(s, start, now, eng.tz, chosen)
+    by_day: dict[date, list] = {}
+    for a in items:
+        by_day.setdefault(a.when.date(), []).append(a)
+    replied = sum(1 for a in items if a.replied and not a.via_log)
+    asked = sum(1 for a in items if not a.via_log)
+    return render(request, "answers.html", by_day=by_day, days=str(n), area=area, areas=[a.value for a in Area],
+                  replied=replied, asked=asked)
+
+
+@router.get("/trends")
+async def trends_page(request: Request):
+    eng = request.app.state.engine
+    now = datetime.now(timezone.utc)
+    with _db(request).session() as s:
+        weeks = progress.weekly(s, now, eng.tz)
+    rows = []
+    for key, group, label, fmt in progress.METRICS:
+        vals = [w.values[key] for w in weeks]
+        top = max([v for v in vals if v is not None] or [0]) or 1
+        if fmt == "pct":
+            top = 100
+        if fmt == "avg":
+            top = 5
+        last, prior = (vals[-2] if len(vals) > 1 else None), (vals[-3] if len(vals) > 2 else None)
+        delta = None if last is None or prior is None else round(last - prior, 1)
+        rows.append({"group": group, "label": label, "fmt": fmt, "vals": vals, "top": top,
+                     "current": vals[-1], "last": last, "delta": delta})
+    return render(request, "trends.html", weeks=weeks, rows=rows)
 
 
 @router.post("/replan")

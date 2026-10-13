@@ -139,6 +139,8 @@
     <span class="brand">la-vie</span>
     {% set here = request.url.path %}
     <a href="/admin" class="{{ 'on' if here == '/admin' }}">Today</a>
+    <a href="/admin/answers" class="{{ 'on' if '/answers' in here }}">Answers</a>
+    <a href="/admin/trends" class="{{ 'on' if '/trends' in here }}">Trends</a>
     <a href="/admin/movement" class="{{ 'on' if '/movement' in here or '/routines' in here }}">Movement</a>
     <a href="/admin/learning" class="{{ 'on' if '/learning' in here or '/paths' in here or '/courses' in here }}">Learning</a>
     <a href="/admin/oreilly" class="{{ 'on' if '/oreilly' in here }}">O'Reilly</a>

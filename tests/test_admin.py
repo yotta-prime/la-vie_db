@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,13 +8,17 @@ from sqlalchemy import select
 from app.admin import routes
 from app.config import get_settings
 from app.models import (
+    Area,
     Course,
     CourseStep,
     Hobby,
     HobbyProject,
     LearningPath,
+    LogEntry,
     MicroMove,
     PickMethod,
+    Prompt,
+    PromptStatus,
     Routine,
     ScheduleRule,
     Setting,
@@ -76,9 +81,29 @@ def test_locked_without_password(client, monkeypatch):
 def test_all_pages_render(client):
     login(client)
     for page in ["/admin", "/admin/movement", "/admin/learning", "/admin/oreilly", "/admin/hobbies",
-                 "/admin/settings", "/"]:
+                 "/admin/settings", "/admin/answers", "/admin/answers?days=90&area=focus", "/admin/trends", "/"]:
         r = client.get(page)
         assert r.status_code == 200, page
+
+
+def test_answers_and_trends_pages_show_replies(client):
+    login(client)
+    eng = client.app.state.engine
+    now = datetime.now(timezone.utc)
+    with db(client).session() as s:
+        p = Prompt(kind="intention", area=Area.FOCUS, scheduled_for=now, sent_at=now, status=PromptStatus.ANSWERED)
+        s.add(p)
+        s.flush()
+        s.add(LogEntry(area=Area.FOCUS, prompt_id=p.id, note="Ship the trends page", created_at=now))
+        s.add(LogEntry(area=Area.FOCUS, prompt_id=p.id, rating=4, created_at=now))
+    page = client.get("/admin/answers").text
+    assert "Ship the trends page" in page and "Focus 4/5" in page and "most important thing" in page
+    assert "Replied to 1 of 1 prompt (100%)" in page
+    assert "Ship the trends page" not in client.get("/admin/answers?area=movement").text
+
+    page = client.get("/admin/trends").text
+    assert "Days with an intention" in page and "Average focus" in page and "<svg" in page
+    assert eng.today(now).strftime("%b") in page
 
 
 def test_oreilly_page_and_status_controls(client):

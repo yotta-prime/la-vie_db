@@ -13,6 +13,8 @@ Personal daily-life service: Telegram prompts for movement, focus, learning path
 
 **http://192.168.0.198:8080/admin** (on the NAS; generally `http://<nas-ip>:8080/admin`)
 
+- **Answers** tab (`/admin/answers`): what la-vie asked in Telegram and what you replied (buttons, focus ratings, typed replies such as your daily intention), plus `/log` entries, by day; filter by period and area. Unanswered prompts are greyed out.
+- **Trends** tab (`/admin/trends`): week-by-week progress (Monday to Sunday) for movement, focus, learning, hobbies and reply rate: a small bar chart per measure, last week vs the week before, and this week so far. Worked out from the stored answers, so it covers everything since la-vie started.
 - **O'Reilly** tab (`/admin/oreilly`): your live events laid out like the events file, with Attended / Missed / Watched controls on every row, plus the Radar newsletter summary.
 - Edit routines and their video links, micro-moves, learning paths, courses and lessons, flashcards, hobbies and projects, dependencies, schedules and settings. The **Today** page shows the day's prompts and can re-plan the rest of the day after a settings change.
 - Reachable from your home network only: keep port 8080 closed on the router.

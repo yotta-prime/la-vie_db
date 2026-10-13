@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Trends · la-vie admin{% endblock %}
+{% block content %}
+{% macro fmtv(v, fmt) -%}
+  {%- if v is none -%}–
+  {%- elif fmt == "pct" -%}{{ v }}%
+  {%- elif fmt == "avg" -%}{{ "%.1f"|format(v) }}
+  {%- else -%}{{ v }}{%- endif -%}
+{%- endmacro %}
+{% macro wk(w) %}{{ w.start.day }} {{ w.start.strftime("%b") }}{% endmacro %}
+
+<style>
+  .trend { width: 100%; }
+  .trend td { vertical-align: middle; }
+  .trend .name { width: 34%; }
+  .trend .num { width: 90px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .trend th.num { font-weight: 600; }
+  .trend th { font: 600 12px/1.2 var(--font-heading); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .spark { display: block; }
+  .spark .bar { fill: var(--color-neutral-500); }
+  .spark .bar.now { fill: var(--accent); }
+  .spark .base { stroke: var(--line); stroke-width: 1; }
+  .spark .hit { fill: transparent; }
+  .spark g:hover .bar { fill: var(--accent-hover); }
+  .delta { color: var(--muted); font-size: 13px; }
+  .scroll { overflow-x: auto; }
+  @media (max-width: 640px) {
+    .trend .opt { display: none; }
+    .trend .num { width: 64px; }
+    .trend .name { width: auto; }
+  }
+  .group td { font: 600 13px/1.2 var(--font-heading); letter-spacing: .08em; text-transform: uppercase; padding-top: 18px; }
+  .wide { overflow-x: auto; }
+  .wide table { min-width: 640px; }
+  .wide td, .wide th { white-space: nowrap; }
+  .wide td.n { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+
+<h1>Trends</h1>
+<p class="muted">Week by week (Monday to Sunday), worked out from your answers and logs; nothing extra is recorded.
+  Bars show the last {{ weeks|length }} week{{ 's' if weeks|length != 1 }}; the highlighted bar is this week, still in progress.
+  Hover a bar for its value.</p>
+
+<section>
+  <div class="scroll">
+  <table class="trend">
+    <tr><th class="name">Measure</th><th>Weekly</th><th class="num">Last week</th><th class="num opt">vs week before</th><th class="num">This week so far</th></tr>
+    {% set n = weeks|length %}
+    {% set bw = 14 %}{% set gap = 6 %}{% set h = 32 %}
+    {% set ns = namespace(group="") %}
+    {% for r in rows %}
+      {% if r.group != ns.group %}{% set ns.group = r.group %}<tr class="group"><td colspan="5">{{ r.group }}</td></tr>{% endif %}
+      <tr>
+        <td class="name">{{ r.label }}</td>
+        <td>
+          <svg class="spark" width="{{ n * (bw + gap) }}" height="{{ h + 2 }}" role="img"
+               aria-label="{{ r.label }} per week: {% for w in weeks %}{{ wk(w) }} {{ fmtv(r.vals[loop.index0], r.fmt) }}{{ ', ' if not loop.last }}{% endfor %}">
+            {% for w in weeks %}
+              {% set v = r.vals[loop.index0] %}
+              {% set x = loop.index0 * (bw + gap) %}
+              <g>
+                <title>Week of {{ wk(w) }}{{ ' (so far)' if w.partial }}: {{ fmtv(v, r.fmt) }}</title>
+                <rect class="hit" x="{{ x - gap / 2 }}" y="0" width="{{ bw + gap }}" height="{{ h + 2 }}"></rect>
+                {% if v %}
+                  {% set bh = [(v / r.top * h), 2]|max %}
+                  {% set top = h - bh %}
+                  {% set rad = [4, bh, bw / 2]|min %}
+                  <path class="bar{{ ' now' if w.partial }}"
+                        d="M{{ x }},{{ h }} V{{ top + rad }} Q{{ x }},{{ top }} {{ x + rad }},{{ top }} H{{ x + bw - rad }} Q{{ x + bw }},{{ top }} {{ x + bw }},{{ top + rad }} V{{ h }} Z"></path>
+                {% endif %}
+              </g>
+            {% endfor %}
+            <line class="base" x1="0" x2="{{ n * (bw + gap) - gap }}" y1="{{ h + 0.5 }}" y2="{{ h + 0.5 }}"></line>
+          </svg>
+        </td>
+        <td class="num">{{ fmtv(r.last, r.fmt) }}</td>
+        <td class="num delta opt">
+          {%- if r.delta is none -%}–
+          {%- elif r.delta > 0 -%}▲ +{{ r.delta }}{{ ' pts' if r.fmt == 'pct' }}
+          {%- elif r.delta < 0 -%}▼ −{{ -r.delta }}{{ ' pts' if r.fmt == 'pct' }}
+          {%- else -%}= same{%- endif -%}
+        </td>
+        <td class="num">{{ fmtv(r.current, r.fmt) }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  </div>
+  <p class="muted" style="margin-top:12px">Changes in percentages are in points (pts). "Last week" needs a full week of data; tracking began the week of {{ wk(weeks[0]) }}.</p>
+</section>
+
+<section>
+  <details>
+    <summary>All weeks as a table</summary>
+    <div class="wide">
+      <table>
+        <tr><th>Measure</th>{% for w in weeks %}<th>{{ wk(w) }}{{ '*' if w.partial }}</th>{% endfor %}</tr>
+        {% for r in rows %}
+        <tr><td>{{ r.label }}</td>{% for v in r.vals %}<td class="n">{{ fmtv(v, r.fmt) }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </table>
+      <p class="muted">* this week, so far.</p>
+    </div>
+  </details>
+</section>
+{% endblock %}

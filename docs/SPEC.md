@@ -127,6 +127,8 @@ Set in the admin page for each item:
 
 - **Streaks** shown in the prompts themselves.
 - **Weekly summary** (Sunday): streaks, learning minutes/steps per path, pro/hobby ratio vs target, hobbies done, average focus score.
+- **Answers page** (admin, `/admin/answers`): every prompt sent with your reply (outcome, focus rating, typed note) or *No reply*, plus `/log` entries, newest first by day; filter 7/14/30/90 days and by area. Answers are stored as `log_entry` rows linked to their `prompt` (`outcome`, `rating`, `note`, `duration_min`).
+- **Trends page** (admin, `/admin/trends`): week-by-week (Mon–Sun) measures derived from those rows: routine days, desk breaks, extra activity minutes, intention days, average focus, focus-block minutes, learning sessions, lessons completed, professional share, hobby sessions, reply rate. Up to 12 weeks of bars (current week highlighted), last week vs the week before, this week so far, and a full table. Code: `app/progress.py`.
 - **CSV export** of raw logs from the admin page.
 
 ## Admin page (LAN only)
@@ -171,6 +173,7 @@ All times are editable in the admin page.
 | Daily prompts for all four areas, buttons, replies, streaks | Built |
 | Pause, quiet hours, `/log`, `/focus`, `/status`, `/summary`, `/health` | Built |
 | Weekly summary (Sunday) | Built |
+| Admin Answers page (your replies) and Trends page (week-by-week progress) | Built |
 | Admin page (all content and settings), Industry theme | Built |
 | Learning paths / courses / lessons, hobby projects and dependencies | Built |
 | Learning content files, O'Reilly events with recording links | Built |

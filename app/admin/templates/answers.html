@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Answers · la-vie admin{% endblock %}
+{% block content %}
+<style>
+  .ans { table-layout: fixed; }
+  .ans td { vertical-align: top; overflow-wrap: anywhere; }
+  .ans .t { width: 56px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ans .a { width: 104px; }
+  .ans .q { width: 50%; }
+  @media (max-width: 600px) { .ans .a { width: 0; padding: 0; font-size: 0; } .ans .q { width: 55%; } }
+  .ans .q .item { display: block; color: var(--muted); font-size: 13px; }
+  .ans .r .note { display: block; white-space: pre-wrap; margin-top: 2px; }
+  .ans tr.none td { color: var(--muted); }
+  .day { font: 600 16px/1.2 var(--font-heading); letter-spacing: .08em; text-transform: uppercase; margin: 22px 0 8px; }
+  .day:first-of-type { margin-top: 0; }
+  form.filters { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 24px; }
+  form.filters > div { min-width: 140px; }
+</style>
+
+<h1>Answers</h1>
+<p class="muted">What la-vie asked in Telegram and what you replied, newest first, plus anything you logged with <code>/log</code>.
+  Typed replies (your daily intention, "what are you doing now?", notes) appear under the answer.</p>
+
+<form class="filters" method="get" action="/admin/answers">
+  <div><label>Period</label>
+    <select name="days">{% for d, label in [("7", "Last 7 days"), ("14", "Last 14 days"), ("30", "Last 30 days"), ("90", "Last 90 days")] %}
+      <option value="{{ d }}" {{ 'selected' if d == days }}>{{ label }}</option>{% endfor %}</select></div>
+  <div><label>Area</label>
+    <select name="area"><option value="">All areas</option>{% for a in areas %}
+      <option value="{{ a }}" {{ 'selected' if a == area }}>{{ a|capitalize }}</option>{% endfor %}</select></div>
+  <button>Show</button>
+  {% if asked %}<span class="muted">Replied to {{ replied }} of {{ asked }} prompt{{ 's' if asked != 1 }} ({{ (replied / asked * 100)|round|int }}%).</span>{% endif %}
+</form>
+
+<section>
+  {% if by_day %}
+    {% for d, items in by_day.items() %}
+      <div class="day">{{ d.strftime("%A") }} {{ d.day }} {{ d.strftime("%B") }}</div>
+      <table class="ans">
+        {% for a in items %}
+        <tr class="{{ 'none' if not a.replied }}">
+          <td class="t">{{ a.when.strftime("%H:%M") }}</td>
+          <td class="a"><span class="chip">{{ a.area }}</span></td>
+          <td class="q">{{ a.question }}{% if a.item %}<span class="item">{{ a.item }}</span>{% endif %}</td>
+          <td class="r">
+            {% if a.answer %}{{ a.answer|join(" · ") }}{% elif not a.replied %}No reply{% elif not a.note %}Answered{% endif %}
+            {% if a.note %}<span class="note">“{{ a.note }}”</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    {% endfor %}
+  {% else %}
+    <p class="muted">Nothing in this period.</p>
+  {% endif %}
+</section>
+{% endblock %}
