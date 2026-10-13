@@ -5,5 +5,8 @@ __pycache__/
 .venv/
 .pytest_cache/
 
+# Chat-export exclusions for other projects (see tools/export_chat.py)
+*.local.txt
+
 # Local screenshots and notes for troubleshooting (not published)
 debug/

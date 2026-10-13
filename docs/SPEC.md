@@ -1,6 +1,6 @@
 # la-vie — daily life service: v1 spec
 
-Captured from the requirements interview, 2026-10-04. Last updated 2026-10-12 (learning content files, O'Reilly import, monitoring). See **Implementation status** at the end for what's built.
+Captured from the requirements interview, 2026-10-04. Last updated 2026-10-13 (learning content files, O'Reilly import, monitoring, Answers and Trends pages). See **Implementation status** at the end for what's built.
 
 ## Overview
 
@@ -166,7 +166,7 @@ All times are editable in the admin page.
 - **Spaced repetition**: FSRS (e.g. the `fsrs` Python package), with Again / Hard / Good / Easy buttons.
 - **Backups**: nightly SQLite online backup (`sqlite3` backup API) at 03:00 to a `backups/` folder, keeping 14, covered by Hyper Backup / Snapshot Replication.
 
-## Implementation status (2026-10-12)
+## Implementation status (2026-10-13)
 
 | Feature | Status |
 |---|---|
@@ -187,3 +187,4 @@ All times are editable in the admin page.
 | CSV export | Not built |
 | CI: tests on every push; NAS deploys only passing commits; Telegram alerts for failed tests/deploys | Built |
 | Reproducible builds: exact dependency versions, base image pinned by digest, Dependabot | Built |
+| Deploys restart the bot only for app changes (docs-only commits update the NAS copy without a restart) | Built |

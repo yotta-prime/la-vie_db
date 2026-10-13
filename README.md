@@ -83,6 +83,10 @@ The tests ignore your local `.env`. GitHub runs them on every push (`.github/wor
 
 Dependabot opens monthly pull requests for Python packages, the base image and GitHub Actions; CI tests each one before you merge.
 
+## Working sessions with Claude Code
+
+Each working session ends with a close-out: docs brought up to date, the chat history exported to [docs/chat-history](docs/chat-history) by `tools/export_chat.py` (secrets redacted), committed and pushed, and the NAS checked to be running the same commit. The steps are in [CLAUDE.md](CLAUDE.md); type `/close-out` to run them. If a session ends without one (timed out or closed), the next session finishes it first.
+
 ## Deploy on Synology
 
 The NAS pulls `main` from GitHub every 15 minutes and redeploys on changes once GitHub's tests have passed (failures are sent to Telegram); secrets live outside the repo, readable only by root. `http://192.168.0.198:8080/health` shows the deployed commit (`version`) and whether the bot is talking to Telegram (`polling`, `last_poll_seconds_ago`). Full steps, monitoring and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md).
