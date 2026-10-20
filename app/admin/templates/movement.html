@@ -2,10 +2,11 @@
 {% from "_macros.html" import url_link %}
 {% block content %}
 <h1>Movement</h1>
+<p><a href="/admin/movement/plan"><strong>Movement plan →</strong></a> <span class="muted">tick the morning, evening and night prompts for each day of the month, and see how they went.</span></p>
 
 <section>
   <h2>Routines</h2>
-  <p class="muted">The morning prompt rotates through active routines. Items can be exercises or links to videos (YouTube, DailyOM…).
+  <p class="muted">Movement prompts go out in the slots ticked on the <a href="/admin/movement/plan">Movement plan</a>; each slot offers the rotation, your own routines, or one course. Items can be exercises or links to videos (YouTube, DailyOM…).
     {% if routines|selectattr("series")|list %}Your routines and course lessons (below) take turns.{% endif %}</p>
   <ul class="list">
     {% for r in routines|rejectattr("series") %}

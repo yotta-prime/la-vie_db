@@ -29,6 +29,7 @@ from app.models import (
     HobbyProject,
     LogEntry,
     MicroMove,
+    MovementPlan,
     Outcome,
     Pause,
     Prompt,
@@ -73,6 +74,15 @@ class ActionResult:
     toast: str | None = None
     edit: Outgoing | None = None  # replaces the pressed message
     extra: list[str] = field(default_factory=list)  # follow-up messages
+
+
+MOVEMENT_SLOTS = ("morning", "evening", "night")
+
+
+def _plan_key(kind: str, payload: dict | None) -> str:
+    """Identifies a planned prompt within a day: its kind, plus the slot for movement routines.
+    (Routine prompts from before the Movement plan have no slot: they were the morning one.)"""
+    return f"routine:{(payload or {}).get('slot', 'morning')}" if kind == "routine" else kind
 
 
 # Telegram allows 4096 characters per message; leave room for the streak and the reply status.
@@ -127,8 +137,9 @@ class Engine:
             if replan_after is not None:
                 for p in s.scalars(day_prompts.where(Prompt.status == PromptStatus.SCHEDULED)):
                     s.delete(p)
-                # Kinds already handled earlier today shouldn't come round again.
-                done_kinds = {p.kind for p in s.scalars(day_prompts) if p.kind not in ("micro_move", "distraction")}
+                # Kinds (and movement slots) already handled earlier today shouldn't come round again.
+                done_kinds = {_plan_key(p.kind, p.payload) for p in s.scalars(day_prompts)
+                              if p.kind not in ("micro_move", "distraction")}
             elif s.scalar(day_prompts.limit(1)):
                 return 0
             else:
@@ -137,29 +148,33 @@ class Engine:
             cfg = self.settings(s)
             times = cfg["prompt_times"]
             workday = day.weekday() in cfg["work_days"]
-            planned: list[tuple[Area, str, datetime]] = [
-                (Area.MOVEMENT, "routine", local_dt(day, times["movement_routine"], self.tz)),
-                (Area.LEARNING, "learning", local_dt(day, times["learning_session"], self.tz)),
-                (Area.HOBBY, "hobby", local_dt(day, times["hobby_session"], self.tz)),
+            planned: list[tuple[Area, str, datetime, dict | None]] = [
+                (Area.LEARNING, "learning", local_dt(day, times["learning_session"], self.tz), None),
+                (Area.HOBBY, "hobby", local_dt(day, times["hobby_session"], self.tz), None),
             ]
+            # Movement: one prompt per slot ticked on the admin Movement plan.
+            slots = cfg["movement_slots"]
+            ticked = set(s.scalars(select(MovementPlan.slot).where(MovementPlan.day == day)))
+            planned += [(Area.MOVEMENT, "routine", local_dt(day, slots[slot]["time"], self.tz), {"slot": slot})
+                        for slot in MOVEMENT_SLOTS if slot in ticked and slot in slots]
             if workday:
                 planned += [
-                    (Area.FOCUS, "intention", local_dt(day, times["focus_intention"], self.tz)),
-                    (Area.FOCUS, "reflection", local_dt(day, times["focus_reflection"], self.tz)),
+                    (Area.FOCUS, "intention", local_dt(day, times["focus_intention"], self.tz), None),
+                    (Area.FOCUS, "reflection", local_dt(day, times["focus_reflection"], self.tz), None),
                 ]
-                planned += [(Area.MOVEMENT, "micro_move", t) for t in self._micro_times(day, cfg)]
-                planned += [(Area.FOCUS, "distraction", t) for t in self._distraction_times(day, cfg)]
+                planned += [(Area.MOVEMENT, "micro_move", t, None) for t in self._micro_times(day, cfg)]
+                planned += [(Area.FOCUS, "distraction", t, None) for t in self._distraction_times(day, cfg)]
             summary = cfg["weekly_summary"]
             if day.weekday() == summary["weekday"]:
-                planned.append((Area.FOCUS, "weekly_summary", local_dt(day, summary["time"], self.tz)))
+                planned.append((Area.FOCUS, "weekly_summary", local_dt(day, summary["time"], self.tz), None))
 
             created = 0
-            for area, kind, when in sorted(planned, key=lambda x: x[2]):
+            for area, kind, when, payload in sorted(planned, key=lambda x: x[2]):
                 if in_quiet_hours(when, cfg["quiet_hours"], self.tz):
                     continue
-                if replan_after is not None and (when <= replan_after or kind in done_kinds):
+                if replan_after is not None and (when <= replan_after or _plan_key(kind, payload) in done_kinds):
                     continue
-                s.add(Prompt(area=area, kind=kind, scheduled_for=when))
+                s.add(Prompt(area=area, kind=kind, scheduled_for=when, payload=payload))
                 created += 1
             return created
 
@@ -267,12 +282,14 @@ class Engine:
         kind = p.kind
 
         if kind == "routine":
-            r = sel.pick_routine(s)
+            slot = payload.get("slot")
+            source = (self.settings(s)["movement_slots"].get(slot) or {}).get("source", "rotation") if slot else "rotation"
+            r = sel.pick_for_source(s, source)
             if r is None:
                 text = "<b>Movement time</b>\nNo routines set up yet; add some in the admin page."
             else:
                 payload["routine_id"] = r.id
-                text = self._routine_text(r)
+                text = self._routine_text(r, slot)
             st = sel.streak(s, Area.MOVEMENT, today, self.tz)
             if st:
                 text += f"\n\nStreak: {st} day{'s' if st != 1 else ''}"
@@ -402,8 +419,9 @@ class Engine:
 
         return ActionResult(toast="Unknown action.")
 
-    def _routine_text(self, r: Routine) -> str:
-        head = f"<b>Movement: {html.escape(r.name)}</b>"
+    def _routine_text(self, r: Routine, slot: str | None = None) -> str:
+        when = f" ({slot})" if slot else ""
+        head = f"<b>Movement{when}: {html.escape(r.name)}</b>"
         if r.duration_min:
             head += f" ({r.duration_min} min)"
         head += link(r.url, "video" if r.series else "open")

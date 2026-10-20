@@ -27,6 +27,7 @@ from app.models import (
     Setting,
 )
 from app.timeutil import in_window, parse_duration
+from tests.conftest import tick_mornings
 
 TZ = ZoneInfo("Europe/London")
 MONDAY = date(2026, 10, 5)
@@ -43,6 +44,7 @@ def db(tmp_path):
     d = Database(f"sqlite:///{tmp_path / 'test.db'}")
     d.create_all()
     seed_settings(d)
+    tick_mornings(d)
     yield d
     d.engine.dispose()
 

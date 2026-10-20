@@ -16,6 +16,14 @@ DEFAULT_SETTINGS: dict[str, object] = {
     "learning_ratio": {"professional": 0.85, "hobby": 0.15},
     "focus_block_default_min": 25,
     "weekly_summary": {"weekday": 6, "time": "18:00"},  # Sunday
+    # Movement prompts go out only in the slots ticked on the admin Movement plan.
+    # source: "rotation" (own routines and course lessons take turns), "own" (own routines),
+    # or "series:<course name>" (that course's lessons, in order).
+    "movement_slots": {
+        "morning": {"time": "06:30", "source": "rotation"},
+        "evening": {"time": "18:00", "source": "rotation"},
+        "night": {"time": "20:30", "source": "rotation"},
+    },
     "backup_time": "03:00",
 }
 
@@ -61,6 +69,33 @@ def seed_content(db) -> None:
                     steps=[RoutineStep(position=i, text=t) for i, t in enumerate(steps)],
                 )
             )
+
+
+def seed_movement_plan(db, today) -> None:
+    """Once, when the Movement plan arrives: keep the daily morning routine going by ticking
+    mornings from today to the end of the month, at the morning time already set."""
+    import calendar
+    from datetime import timedelta
+
+    from app.models import MovementPlan, Setting
+
+    with db.session() as s:
+        if s.get(Setting, "movement_plan_seeded"):
+            return
+        old = (s.get(Setting, "prompt_times").value or {}) if s.get(Setting, "prompt_times") else {}
+        slots = {k: dict(v) for k, v in DEFAULT_SETTINGS["movement_slots"].items()}
+        slots["morning"]["time"] = old.get("movement_routine", slots["morning"]["time"])
+        row = s.get(Setting, "movement_slots")  # seed_settings may have added the defaults
+        if row is None:
+            s.add(Setting(key="movement_slots", value=slots))
+        else:
+            row.value = slots
+        last = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+        day = today
+        while day <= last:
+            s.add(MovementPlan(day=day, slot="morning"))
+            day += timedelta(days=1)
+        s.add(Setting(key="movement_plan_seeded", value=True))
 
 
 def seed_settings(db) -> None:

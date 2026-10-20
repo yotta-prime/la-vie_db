@@ -13,7 +13,7 @@ from app.bot import Bot
 from app.config import get_settings
 from app.content import CONTENT_DIR, import_content
 from app.db import Database
-from app.defaults import seed_content, seed_settings
+from app.defaults import seed_content, seed_movement_plan, seed_settings
 from app.engine import Engine
 from app.models import Setting
 from app.scheduler import build_scheduler
@@ -45,6 +45,7 @@ async def lifespan(app: FastAPI):
     seed_settings(db)
     import_content(db, CONTENT_DIR, settings.data_dir / "content")
     seed_content(db)
+    seed_movement_plan(db, datetime.now(ZoneInfo(settings.timezone)).date())
 
     with db.session() as s:
         backup_time = s.get(Setting, "backup_time").value

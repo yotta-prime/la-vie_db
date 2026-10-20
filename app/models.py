@@ -24,6 +24,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TypeDecorator
@@ -157,6 +158,21 @@ class RoutineStep(Base):
     duration_sec: Mapped[int | None]
 
     routine: Mapped[Routine] = relationship(back_populates="steps")
+
+
+class MovementPlan(Base):
+    """A ticked movement slot on a date: that day gets a movement prompt at the slot's time.
+
+    Slots are "morning", "evening" and "night"; their times and what each offers are in the
+    `movement_slots` setting. A day with no rows gets no movement routine prompt.
+    """
+
+    __tablename__ = "movement_plan"
+    __table_args__ = (UniqueConstraint("day", "slot", name="uq_movement_plan_day_slot"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    day: Mapped[date] = mapped_column(Date, index=True)
+    slot: Mapped[str] = mapped_column(String(10))
 
 
 class MicroMove(Base):

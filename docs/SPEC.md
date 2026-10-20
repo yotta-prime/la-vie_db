@@ -29,6 +29,7 @@ Desk job, ~9–5 on weekdays. Prompts are spread through the day:
 
 ### Movement
 - **Named routines** defined in admin (name, duration, steps); the prompt names today's routine and lists the steps.
+- **Movement plan** (admin, `/admin/movement/plan`): three daily slots, **morning / evening / night** (default 06:30 / 18:00 / 20:30, setting `movement_slots`), ticked per date on a month grid. Only ticked slots get a movement prompt; a new month starts unticked (on first install, mornings to the end of the current month were ticked to keep the daily routine going). Each slot offers the rotation, your own routines, or one course's lessons in order (`series:<course>`); the prompt says which slot it is. Past slots show their outcome (done / partly / skipped or missed, colour-coded; red is kept for time-bound items) and the month's completion rate. Saving re-plans the rest of today. Table `movement_plan` (day, slot). Code: `app/movement_plan.py`.
 - **Course lessons as routines** (e.g. paid DailyOM courses): each lesson with a video becomes a routine carrying its course and section (with links), the list of movements, and the lesson text before and after the video (collapsed in Telegram, trimmed to fit, with a **▶ Open video** button). Your own routines and course lessons take turns; lessons run in order, one course at a time. Loaded add-only from a private file in the NAS data folder (`data/content/*.yaml`), never the public repo; built with `tools/dailyom_to_yaml.py` from a one-off export while signed in.
 - **Desk-break micro-moves**: short 2–5 min reminders at intervals during work hours.
 - **Logging**: inline buttons Done / Partial / Skip; streaks tracked.
@@ -190,3 +191,4 @@ All times are editable in the admin page.
 | Reproducible builds: exact dependency versions, base image pinned by digest, Dependabot | Built |
 | Deploys restart the bot only for app changes (docs-only commits update the NAS copy without a restart) | Built |
 | DailyOM movement lessons as routines (private content file, schema v5), alternating with your own routines | Built |
+| Movement plan: month grid of morning/evening/night slots per date, per-slot course, outcomes and completion rate | Built |

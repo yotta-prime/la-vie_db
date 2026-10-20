@@ -18,7 +18,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 
-from app import progress
+from app import movement_plan, progress
 from app.config import get_settings
 from app.engine import complete_course
 from app.models import (
@@ -256,6 +256,92 @@ async def replan(request: Request):
     now = datetime.now(timezone.utc)
     n = eng.plan_day(eng.today(now), replan_after=now)
     return back("/admin", f"Re-planned the rest of today: {n} prompts.")
+
+
+# --- movement plan ------------------------------------------------------------
+
+SLOT_LABELS = {"morning": "Morning", "evening": "Evening", "night": "Night"}
+
+
+def _month_arg(value: str | None, today: date) -> tuple[int, int]:
+    m = re.fullmatch(r"(\d{4})-(\d{2})", value or "")
+    if m and 1 <= int(m.group(2)) <= 12:
+        return int(m.group(1)), int(m.group(2))
+    return today.year, today.month
+
+
+def _shift(year: int, month: int, n: int) -> str:
+    i = year * 12 + month - 1 + n
+    return f"{i // 12:04d}-{i % 12 + 1:02d}"
+
+
+@router.get("/movement/plan")
+async def movement_plan_page(request: Request, month: str = ""):
+    eng = request.app.state.engine
+    now = datetime.now(timezone.utc)
+    today = eng.today(now)
+    year, mon = _month_arg(month, today)
+    with _db(request).session() as s:
+        slots = eng.settings(s)["movement_slots"]
+        days = movement_plan.month(s, year, mon, slots, now, eng.tz)
+        courses = sorted({c for (c,) in s.execute(select(Routine.series).where(Routine.series.is_not(None)))})
+    counted = [c for d in days for c in d.cells.values() if c.state not in (movement_plan.OFF, movement_plan.PLANNED,
+                                                                            movement_plan.AWAITING)]
+    done = sum(c.state == movement_plan.DONE for c in counted)
+    return render(
+        request, "movement_plan.html", days=days, slots=slots, slot_labels=SLOT_LABELS, courses=courses,
+        today=today, month=f"{year:04d}-{mon:02d}", title=date(year, mon, 1).strftime("%B %Y"),
+        prev=_shift(year, mon, -1), next=_shift(year, mon, 1),
+        planned=sum(c.ticked for d in days for c in d.cells.values() if c.editable),
+        done=done, due=len(counted),
+    )
+
+
+@router.post("/movement/plan")
+async def movement_plan_save(request: Request):
+    form = await request.form()
+    eng = request.app.state.engine
+    now = datetime.now(timezone.utc)
+    year, mon = _month_arg(txt(form, "month"), eng.today(now))
+    ticks = set()
+    for key in form.keys():
+        m = re.fullmatch(r"t-(\d{4}-\d{2}-\d{2})-(morning|evening|night)", key)
+        if m:
+            ticks.add((date.fromisoformat(m.group(1)), m.group(2)))
+    with _db(request).session() as s:
+        slots = eng.settings(s)["movement_slots"]
+        changed = movement_plan.save(s, year, mon, ticks, slots, now, eng.tz)
+    n = eng.plan_day(eng.today(now), replan_after=now)
+    return back(f"/admin/movement/plan?month={year:04d}-{mon:02d}",
+                f"Plan saved ({changed} change{'s' if changed != 1 else ''}); rest of today re-planned ({n} prompts).")
+
+
+@router.post("/movement/slots")
+async def movement_slots_save(request: Request):
+    form = await request.form()
+    eng = request.app.state.engine
+    month = txt(form, "month") or ""
+    with _db(request).session() as s:
+        courses = {c for (c,) in s.execute(select(Routine.series).where(Routine.series.is_not(None)))}
+        slots = {}
+        for slot in SLOT_LABELS:
+            t = str(form.get(f"{slot}_time"))
+            try:
+                parse_hhmm(t)
+            except (ValueError, TypeError):
+                return back(f"/admin/movement/plan?month={month}", "Times must be HH:MM.")
+            source = str(form.get(f"{slot}_source") or "rotation")
+            if source not in ("rotation", "own") and source.removeprefix("series:") not in courses:
+                source = "rotation"
+            slots[slot] = {"time": t, "source": source}
+        row = s.get(Setting, "movement_slots")
+        if row:
+            row.value = slots
+        else:
+            s.add(Setting(key="movement_slots", value=slots))
+    now = datetime.now(timezone.utc)
+    n = eng.plan_day(eng.today(now), replan_after=now)
+    return back(f"/admin/movement/plan?month={month}", f"Slots saved; rest of today re-planned ({n} prompts).")
 
 
 # --- movement -----------------------------------------------------------------
@@ -730,8 +816,8 @@ async def oreilly_update(request: Request, sid: int):
 
 # --- settings -----------------------------------------------------------------
 
+# Movement prompt times are set per slot on the Movement plan page (setting `movement_slots`).
 TIME_FIELDS = {
-    "movement_routine": "Movement routine",
     "focus_intention": "Focus intention",
     "learning_session": "Learning session",
     "hobby_session": "Hobby session",

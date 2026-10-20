@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,6 +16,7 @@ from app.models import (
     LearningPath,
     LogEntry,
     MicroMove,
+    MovementPlan,
     PickMethod,
     Prompt,
     PromptStatus,
@@ -84,6 +85,30 @@ def test_all_pages_render(client):
                  "/admin/settings", "/admin/answers", "/admin/answers?days=90&area=focus", "/admin/trends", "/"]:
         r = client.get(page)
         assert r.status_code == 200, page
+
+
+def test_movement_plan_page_ticks_and_slots(client):
+    login(client)
+    today = client.app.state.engine.today(datetime.now(timezone.utc))
+    nxt = (today.replace(day=28) + timedelta(days=7)).replace(day=1)  # next month: all editable
+    month = f"{nxt:%Y-%m}"
+    page = client.get(f"/admin/movement/plan?month={month}").text
+    assert "Movement plan" in page and f't-{nxt.isoformat()}-night' in page
+    r = client.post("/admin/movement/plan", data={"month": month, f"t-{nxt.isoformat()}-night": "on",
+                                                  f"t-{nxt.isoformat()}-evening": "on"})
+    assert "Plan saved (2 changes)" in r.text
+    with db(client).session() as s:
+        assert {(p.day, p.slot) for p in s.scalars(select(MovementPlan)).all() if p.day == nxt} == {
+            (nxt, "night"), (nxt, "evening")}
+    r = client.post("/admin/movement/slots", data={
+        "month": month, "morning_time": "07:00", "morning_source": "own", "evening_time": "18:30",
+        "evening_source": "series:Nope", "night_time": "20:15", "night_source": "rotation"})
+    assert "Slots saved" in r.text
+    with db(client).session() as s:
+        slots = s.get(Setting, "movement_slots").value
+    assert slots["morning"] == {"time": "07:00", "source": "own"}
+    assert slots["evening"]["source"] == "rotation"  # unknown course falls back
+    assert "HH:MM" in client.post("/admin/movement/slots", data={"month": month, "morning_time": "7am"}).text
 
 
 def test_movement_page_lists_course_lessons_by_course(client):
@@ -249,7 +274,7 @@ def test_routines_with_links_and_micro_moves(client):
 def test_settings_save_and_replan(client):
     login(client)
     form = {
-        "movement_routine": "07:00", "focus_intention": "08:30", "learning_session": "18:00",
+        "focus_intention": "08:30", "learning_session": "18:00",
         "hobby_session": "19:30", "focus_reflection": "20:45", "work_days": ["0", "1", "2", "3"],
         "work_start": "09:30", "work_end": "17:30", "quiet_start": "22:00", "quiet_end": "06:30",
         "micro_move_interval_min": "90", "distraction_checks_per_day": "1",
@@ -259,7 +284,7 @@ def test_settings_save_and_replan(client):
     r = client.post("/admin/settings", data=form)
     assert "re-planned" in r.text
     with db(client).session() as s:
-        assert s.get(Setting, "prompt_times").value["movement_routine"] == "07:00"
+        assert s.get(Setting, "prompt_times").value["focus_intention"] == "08:30"
         assert s.get(Setting, "work_days").value == [0, 1, 2, 3]
         assert s.get(Setting, "learning_ratio").value == {"professional": 0.75, "hobby": 0.25}
         assert s.get(Setting, "weekly_summary").value == {"weekday": 5, "time": "17:00"}

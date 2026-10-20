@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Movement plan · la-vie admin{% endblock %}
+{% block content %}
+{% set state_label = {"done": "Done", "partial": "Partly done", "skipped": "Skipped", "missed": "Missed (no reply)",
+                      "awaiting": "Sent, waiting for your reply", "planned": "Planned", "off": "Not planned"} %}
+<style>
+  .plan { table-layout: fixed; width: 100%; max-width: 560px; }
+  .plan th, .plan td { text-align: center; padding: 6px 4px; }
+  .plan th.d, .plan td.d { text-align: left; width: 34%; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .plan tr.we td { background: color-mix(in srgb, var(--line) 35%, transparent); }
+  .plan tr.today td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); font-weight: 600; }
+  .plan input[type=checkbox] { width: 20px; height: 20px; margin: 0; cursor: pointer; }
+  .plan th button { font-size: 11px; padding: 2px 6px; margin-top: 4px; }
+  .led { width: 12px; height: 12px; border-radius: 50%; display: inline-block; vertical-align: middle; }
+  .led-done { background: #3f9c5f; box-shadow: 0 0 5px #3f9c5f; }
+  .led-partial { background: #e6c83a; box-shadow: 0 0 5px #e6c83a; }
+  .led-skipped, .led-missed { background: #e8772e; box-shadow: 0 0 5px #e8772e; }  /* orange: red is kept for time-bound items */
+  .led-awaiting, .led-planned { background: #9a9da3; }
+  .off { color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; }
+  .monthnav { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .monthnav h2 { margin: 0; }
+  .slots { display: grid; grid-template-columns: 90px 110px 1fr; gap: 8px 12px; align-items: center; max-width: 620px; }
+  @media (max-width: 600px) { .slots { grid-template-columns: 70px 100px 1fr; } }
+  .savebar { position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; }
+</style>
+
+<p><a href="/admin/movement">← Movement</a></p>
+<h1>Movement plan</h1>
+<p class="muted">Tick the slots that should get a movement prompt in Telegram. Each day's prompts are planned just after
+  midnight, and saving re-plans the rest of today. Past slots show how they went.</p>
+
+<section>
+  <h2>Slots</h2>
+  <form method="post" action="/admin/movement/slots">
+    <input type="hidden" name="month" value="{{ month }}">
+    <div class="slots">
+      <span></span><strong class="muted">Time</strong><strong class="muted">Offers</strong>
+      {% for slot, label in slot_labels.items() %}
+        {% set cur = slots.get(slot, {}) %}
+        <label for="{{ slot }}_time">{{ label }}</label>
+        <input id="{{ slot }}_time" type="time" name="{{ slot }}_time" value="{{ cur.time }}" required>
+        <select name="{{ slot }}_source">
+          <option value="rotation" {{ 'selected' if cur.source == 'rotation' }}>Rotation</option>
+          <option value="own" {{ 'selected' if cur.source == 'own' }}>Your own routines</option>
+          {% for c in courses %}
+          <option value="series:{{ c }}" {{ 'selected' if cur.source == 'series:' ~ c }}>Course: {{ c }}</option>
+          {% endfor %}
+        </select>
+      {% endfor %}
+    </div>
+    <div class="actions"><button class="primary">Save slots</button></div>
+  </form>
+  <p class="muted"><b>Rotation</b>: your own routines and course lessons take turns. <b>Course</b>: that course's lessons, in order.
+    Quiet hours (Settings) hold back anything inside them, so keep the night slot before they start.</p>
+</section>
+
+<section>
+  <div class="monthnav">
+    <a href="/admin/movement/plan?month={{ prev }}" aria-label="Previous month">‹</a>
+    <h2>{{ title }}</h2>
+    <a href="/admin/movement/plan?month={{ next }}" aria-label="Next month">›</a>
+  </div>
+  {% if due %}<p>Done {{ done }} of {{ due }} planned slot{{ 's' if due != 1 }} so far ({{ (done / due * 100)|round|int }}%).
+    {% if planned %}{{ planned }} still to come.{% endif %}</p>
+  {% elif planned %}<p>{{ planned }} slot{{ 's' if planned != 1 }} planned.</p>{% endif %}
+  <div class="legend">
+    <span><span class="led led-done"></span> Done</span>
+    <span><span class="led led-partial"></span> Partly done</span>
+    <span><span class="led led-missed"></span> Missed or skipped</span>
+    <span><span class="led led-awaiting"></span> Waiting for your reply</span>
+    <span>☐ / ☑ Still to come: tick to plan</span>
+  </div>
+
+  <form method="post" action="/admin/movement/plan">
+    <input type="hidden" name="month" value="{{ month }}">
+    <table class="plan">
+      <tr>
+        <th class="d">Date</th>
+        {% for slot, label in slot_labels.items() %}
+        <th>{{ label }}<br><span class="muted" style="font-weight:400">{{ slots.get(slot, {}).time }}</span><br>
+          <button type="button" data-col="{{ slot }}" title="Tick or untick every remaining {{ label|lower }}">All</button></th>
+        {% endfor %}
+      </tr>
+      {% for d in days %}
+      <tr class="{{ 'we' if d.day.weekday() >= 5 }} {{ 'today' if d.day == today }}">
+        <td class="d">{{ WEEKDAYS[d.day.weekday()] }} {{ d.day.day }}</td>
+        {% for slot in slot_labels %}
+          {% set c = d.cells[slot] %}
+          <td>
+            {% if c.editable %}
+              <input type="checkbox" name="t-{{ d.day.isoformat() }}-{{ slot }}" data-col="{{ slot }}" {{ 'checked' if c.ticked }}
+                     aria-label="{{ slot_labels[slot] }} {{ d.day.day }} {{ d.day.strftime('%b') }}">
+            {% elif c.state == "off" %}
+              <span class="off" title="Not planned">–</span>
+            {% else %}
+              <span class="led led-{{ c.state }}" title="{{ state_label[c.state] }}" role="img" aria-label="{{ state_label[c.state] }}"></span>
+            {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+    <div class="savebar"><button class="primary">Save plan</button></div>
+  </form>
+</section>
+
+<script>
+  document.querySelectorAll("button[data-col]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var boxes = document.querySelectorAll('input[type=checkbox][data-col="' + b.dataset.col + '"]');
+      var all = Array.prototype.every.call(boxes, function (x) { return x.checked; });
+      boxes.forEach(function (x) { x.checked = !all; });
+    });
+  });
+</script>
+{% endblock %}

@@ -13,6 +13,7 @@ from app.db import Database
 from app.defaults import seed_settings
 from app.engine import Engine
 from app.models import Attendance, Course, CourseStep, LogEntry, Prompt, PromptStatus
+from tests.conftest import tick_mornings
 
 TZ = ZoneInfo("Europe/London")
 MONDAY = date(2026, 10, 12)
@@ -28,6 +29,7 @@ def db(tmp_path):
     d = Database(f"sqlite:///{tmp_path / 'test.db'}")
     d.create_all()
     seed_settings(d)
+    tick_mornings(d)
     import_file(d, CONTENT_DIR / "oreilly.yaml")
     yield d
     d.engine.dispose()

@@ -218,6 +218,34 @@ def pick_project(s: Session, hobby: Hobby) -> HobbyProject | None:
 # --- movement -----------------------------------------------------------------
 
 
+def pick_for_source(s: Session, source: str) -> Routine | None:
+    """What a Movement plan slot offers: "rotation" (pick_routine), "own" (your own routines,
+    least recently done first) or "series:<course>" (that course's lessons, in order).
+    Falls back to the rotation if the chosen course no longer has active lessons."""
+    if source == "own" or source.startswith("series:"):
+        routines = list(s.scalars(select(Routine).where(Routine.active).order_by(Routine.id)))
+        last = _routines_last_done(s)
+        if source == "own":
+            own = [r for r in routines if not r.series]
+            if own:
+                return min(own, key=lambda r: (last.get(r.id, NEVER), r.id))
+        else:
+            lessons = [r for r in routines if r.series == source.removeprefix("series:")]
+            if lessons:
+                return _next_lesson(lessons, last)
+    return pick_routine(s)
+
+
+def _routines_last_done(s: Session) -> dict:
+    return dict(
+        s.execute(
+            select(LogEntry.routine_id, func.max(LogEntry.created_at))
+            .where(LogEntry.routine_id.is_not(None), LogEntry.outcome.in_(DONE))
+            .group_by(LogEntry.routine_id)
+        ).all()
+    )
+
+
 def pick_routine(s: Session) -> Routine | None:
     """Your own routines and outside-course lessons (routines with a `series`) take turns.
 
@@ -228,14 +256,8 @@ def pick_routine(s: Session) -> Routine | None:
     routines = list(s.scalars(select(Routine).where(Routine.active).order_by(Routine.id)))
     if not routines:
         return None
-    last = dict(
-        s.execute(
-            select(LogEntry.routine_id, func.max(LogEntry.created_at))
-            .where(LogEntry.routine_id.is_not(None), LogEntry.outcome.in_(DONE))
-            .group_by(LogEntry.routine_id)
-        ).all()
-    )
-    own = [r for r in routines if not r.series]
+    last = _routines_last_done(s)
+    own =[r for r in routines if not r.series]
     lessons = [r for r in routines if r.series]
     if lessons and own:
         # Whichever kind was done less recently goes next; your own routines win a tie.
