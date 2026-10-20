@@ -138,6 +138,11 @@ def _routines(s: Session, series: dict, counts: dict) -> None:
                 if getattr(r, field) is None and value:
                     setattr(r, field, value)
                     counts["links"] += 1
+            # The lesson text isn't editable in the admin page, so the file is its source: refresh it
+            # (e.g. after a better export). Names, links, order and moves stay as edited.
+            if (r.intro, r.outro) != (lesson.get("intro"), lesson.get("outro")):
+                r.intro, r.outro = lesson.get("intro"), lesson.get("outro")
+                counts["texts"] += 1
             continue
         s.add(
             Routine(
@@ -160,7 +165,7 @@ def _routines(s: Session, series: dict, counts: dict) -> None:
 
 def import_file(db: Database, file: Path) -> dict:
     data = yaml.safe_load(file.read_text(encoding="utf-8")) or {}
-    counts = {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 0}
+    counts = {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 0, "texts": 0}
     with db.session() as s:
         for p in data.get("paths", []):
             path = _by_key(s, LearningPath, p["key"])
@@ -197,6 +202,6 @@ def import_content(db: Database, *dirs: Path) -> None:
                 log.exception("Content import failed for %s; skipped", file.name)
                 continue
             if any(counts.values()):
-                log.info("Imported %s: %d paths, %d courses, %d lessons, %d routines added; %d links filled in",
+                log.info("Imported %s: %d paths, %d courses, %d lessons, %d routines added; %d links filled in; %d lesson texts refreshed",
                          file.name, counts["paths"], counts["courses"], counts["lessons"], counts["routines"],
-                         counts["links"])
+                         counts["links"], counts["texts"])

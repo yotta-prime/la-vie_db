@@ -437,9 +437,13 @@ class Engine:
         text = "\n".join(lines)
         # Text from the lesson page around the video, collapsed; trimmed to Telegram's limit.
         notes = [(label, body) for label, body in (("Before the video", r.intro), ("After the video", r.outro)) if body]
-        room = ROUTINE_TEXT_MAX - len(text) - 200
-        for label, body in notes:
-            share = max(room // len(notes), 0)
+        room = max(ROUTINE_TEXT_MAX - len(text) - 200, 0)
+        # Share the room fairly: a short block keeps all its text and leaves the rest to the other.
+        shares, left = [0] * len(notes), room
+        for k, i in enumerate(sorted(range(len(notes)), key=lambda i: len(notes[i][1]))):
+            shares[i] = min(len(notes[i][1]), left // (len(notes) - k))
+            left -= shares[i]
+        for (label, body), share in zip(notes, shares):
             if len(body) > share:
                 body = body[: max(share - 40, 0)].rsplit(" ", 1)[0] + " … (more in the lesson)"
             text += f"\n<blockquote expandable><b>{label}</b>\n{html.escape(body, quote=False)}</blockquote>"

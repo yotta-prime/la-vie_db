@@ -21,7 +21,7 @@ def db(tmp_path):
 
 
 def test_oreilly_file_matches_approved_allocation(db):
-    assert import_file(db, OREILLY) == {"paths": 3, "courses": 10, "lessons": 52, "routines": 0, "links": 0}
+    assert import_file(db, OREILLY) == {"paths": 3, "courses": 10, "lessons": 52, "routines": 0, "links": 0, "texts": 0}
     with db.session() as s:
         paths = {p.name: [c.name for c in p.courses] for p in s.scalars(select(LearningPath))}
         assert paths == {
@@ -66,7 +66,7 @@ def test_links_filled_into_existing_lessons_but_never_overwritten(db, tmp_path):
             "https://example.org/mine"
 
     counts = import_file(db, OREILLY)
-    assert counts == {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 42}
+    assert counts == {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 42, "texts": 0}
     with db.session() as s:
         mine = s.scalar(select(CourseStep).where(CourseStep.source_key == "oreilly-2026-09-17-vibe-vs-spec"))
         assert mine.url == "https://example.org/mine"
@@ -88,14 +88,14 @@ def test_reimport_adds_only_new_and_keeps_admin_edits(db, tmp_path):
         c.name = "Data (renamed in admin)"
         c.steps[0].done_at = utcnow()
 
-    assert import_file(db, OREILLY) == {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 0}
+    assert import_file(db, OREILLY) == {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 0, "texts": 0}
 
     extra = tmp_path / "extra.yaml"
     extra.write_text(yaml.safe_dump({"courses": [{
         "key": "oreilly-data", "name": "Data", "category": "professional",
         "lessons": [{"key": "oreilly-2026-10-27-data", "title": "What's Happening in Data (27 Oct)"}],
     }]}), encoding="utf-8")
-    assert import_file(db, extra) == {"paths": 0, "courses": 0, "lessons": 1, "routines": 0, "links": 0}
+    assert import_file(db, extra) == {"paths": 0, "courses": 0, "lessons": 1, "routines": 0, "links": 0, "texts": 0}
 
     with db.session() as s:
         c = s.scalar(select(Course).where(Course.source_key == "oreilly-data"))
