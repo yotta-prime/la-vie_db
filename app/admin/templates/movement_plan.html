@@ -27,7 +27,7 @@
   .led-partial { background: #e6c83a; box-shadow: 0 0 5px #e6c83a; }
   .led-skipped, .led-missed { background: #e8772e; box-shadow: 0 0 5px #e8772e; }  /* orange: red is kept for time-bound items */
   .led-awaiting, .led-planned { background: #9a9da3; }
-  .off { color: var(--muted); }
+  .off { color: var(--text); }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; }
   .monthnav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .monthnav a { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px;
@@ -36,6 +36,7 @@
   .slots { display: grid; grid-template-columns: 90px 110px 1fr; gap: 8px 12px; align-items: center; max-width: 620px; }
   @media (max-width: 600px) { .slots { grid-template-columns: 70px 100px 1fr; } }
   .savebar { position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; }
+  html { scroll-padding-bottom: 72px; }  /* keyboard focus never lands under the sticky save bar (WCAG 2.4.11) */
 </style>
 
 <p><a href="/admin/movement">← Movement</a></p>

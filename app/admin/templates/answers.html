@@ -23,10 +23,10 @@
 
 <form class="filters" method="get" action="/admin/answers">
   <div><label>Period</label>
-    <select name="days">{% for d, label in [("7", "Last 7 days"), ("14", "Last 14 days"), ("30", "Last 30 days"), ("90", "Last 90 days")] %}
+    <select aria-label="Period" name="days">{% for d, label in [("7", "Last 7 days"), ("14", "Last 14 days"), ("30", "Last 30 days"), ("90", "Last 90 days")] %}
       <option value="{{ d }}" {{ 'selected' if d == days }}>{{ label }}</option>{% endfor %}</select></div>
   <div><label>Area</label>
-    <select name="area"><option value="">All areas</option>{% for a in areas %}
+    <select aria-label="Area" name="area"><option value="">All areas</option>{% for a in areas %}
       <option value="{{ a }}" {{ 'selected' if a == area }}>{{ a|capitalize }}</option>{% endfor %}</select></div>
   <button>Show</button>
   {% if asked %}<span class="muted">Replied to {{ replied }} of {{ asked }} prompt{{ 's' if asked != 1 }} ({{ (replied / asked * 100)|round|int }}%).</span>{% endif %}

@@ -150,6 +150,25 @@ def test_movement_plan_page_accessibility_basics(client):
     assert 'role="img" aria-label="Done"' in page and ">✓<" in page
 
 
+def test_every_page_has_its_own_title_and_named_fields(client):
+    """WCAG checks that are cheap to keep: a distinct <title> per page, and no form field without a name."""
+    login(client)
+    pages = ["/admin", "/admin/answers", "/admin/trends", "/admin/movement", "/admin/movement/plan",
+             "/admin/learning", "/admin/oreilly", "/admin/hobbies", "/admin/settings"]
+    titles = set()
+    for page in pages:
+        html = client.get(page).text
+        title = re.search(r"<title>(.*?)</title>", html, re.S).group(1).strip()
+        assert title != "la-vie admin", page
+        titles.add(title)
+        for field in re.findall(r"<(?:input|select|textarea)\b[^>]*>", html):
+            if re.search(r'type="(hidden|checkbox|submit)"', field):
+                continue
+            assert re.search(r'aria-label="[^"]+"|aria-labelledby=|\bid="', field), (page, field[:90])
+    assert len(titles) == len(pages)
+    assert 'role="status"' in client.get("/admin/settings?msg=Saved").text
+
+
 def test_movement_page_lists_course_lessons_by_course(client):
     login(client)
     with db(client).session() as s:

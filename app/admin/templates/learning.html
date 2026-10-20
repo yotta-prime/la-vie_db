@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}Learning · la-vie admin{% endblock %}
 {% from "_macros.html" import url_link %}
 
 {% macro course_row(c) %}
@@ -31,8 +32,8 @@
   </ul>
   <form method="post" action="/admin/courses" class="row" style="margin-top:10px">
     <input type="hidden" name="path_id" value="{{ p.id }}">
-    <input class="grow" type="text" name="name" placeholder="Add a course to this path" required>
-    <select name="kind" style="width:auto">
+    <input class="grow" type="text" name="name" aria-label="Add a course to this path" placeholder="Add a course to this path" required>
+    <select name="kind" aria-label="Course type" style="width:auto">
       <option value="steps">Lessons</option><option value="time">Time goal</option><option value="srs">Flashcards</option>
     </select>
     <button>Add course</button>
@@ -46,11 +47,11 @@
     {% for c in standalone %}{{ course_row(c) }}{% else %}<li class="muted">None yet.</li>{% endfor %}
   </ul>
   <form method="post" action="/admin/courses" class="row" style="margin-top:10px">
-    <input class="grow" type="text" name="name" placeholder="New individual course" required>
-    <select name="category" style="width:auto">
+    <input class="grow" type="text" name="name" aria-label="New individual course" placeholder="New individual course" required>
+    <select name="category" aria-label="Category" style="width:auto">
       <option value="professional">Professional</option><option value="hobby">Hobby</option>
     </select>
-    <select name="kind" style="width:auto">
+    <select name="kind" aria-label="Course type" style="width:auto">
       <option value="steps">Lessons</option><option value="time">Time goal</option><option value="srs">Flashcards</option>
     </select>
     <button class="primary">Add course</button>
@@ -61,8 +62,8 @@
   <h2>New learning path</h2>
   <p class="muted">A path groups courses, e.g. "Cloud architect" → Networking, Security, Kubernetes.</p>
   <form method="post" action="/admin/paths" class="row">
-    <input class="grow" type="text" name="name" placeholder="Path name" required>
-    <select name="category" style="width:auto">
+    <input class="grow" type="text" name="name" aria-label="Path name" placeholder="Path name" required>
+    <select name="category" aria-label="Category" style="width:auto">
       <option value="professional">Professional</option><option value="hobby">Hobby</option>
     </select>
     <button class="primary">Add path</button>

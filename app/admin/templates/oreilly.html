@@ -36,15 +36,15 @@
 {% if st.event_state == "pending" %}
 <form method="post" action="/admin/oreilly/{{ st.id }}" class="row" style="gap:4px;margin-top:4px">
   <input type="hidden" name="action" value="when">
-  <input type="date" name="date" value="{{ st.event_date or '' }}" style="width:auto;min-height:30px">
-  <input type="time" name="time" value="{{ st.event_time or '' }}" style="width:auto;min-height:30px">
+  <input type="date" name="date" aria-label="Event date for {{ st.title }}" value="{{ st.event_date or '' }}" style="width:auto;min-height:30px">
+  <input type="time" name="time" aria-label="Start time for {{ st.title }}" value="{{ st.event_time or '' }}" style="width:auto;min-height:30px">
   <button class="icon">Set</button>
 </form>
 {% endif %}
 {% if link_field %}
 <form method="post" action="/admin/oreilly/{{ st.id }}" class="row" style="gap:4px;margin-top:4px">
   <input type="hidden" name="action" value="url">
-  <input class="grow" type="url" name="url" placeholder="Paste recording link" style="min-height:30px">
+  <input class="grow" type="url" name="url" aria-label="Recording link for {{ st.title }}" placeholder="Paste recording link" style="min-height:30px">
   <button class="icon">Add</button>
 </form>
 {% endif %}
@@ -57,7 +57,9 @@
 
 {% block content %}
 <style>
-  .wide { overflow-x: auto; }
+  .wide { overflow-x: auto; position: relative; }  /* relative: keeps hidden header text inside the scroll box */
+  td .muted a { display: inline-block; padding-block: 5px; }  /* 24px click area */
+  .radar table { display: block; overflow-x: auto; }
   .wide table { min-width: 720px; }
   .num { width: 36px; color: var(--muted); }
   .date { white-space: nowrap; width: 100px; }
@@ -70,6 +72,7 @@
   .led-registered, .led-waitlisted { background: #e6c83a; box-shadow: 0 0 5px #e6c83a; }
   .led-waitlisted { opacity: .55; }
   .led-off { background: #9a9da3; box-shadow: none; }
+  .led { outline: 1px solid var(--ring); }  /* dots stay visible on light rows (WCAG 1.4.11) */
   .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
   .legend span { display: inline-flex; gap: 6px; align-items: center; }
   .totals { font-weight: 600; }
@@ -94,7 +97,7 @@
 <section>
   <h2>📅 Planned / Registered (upcoming)</h2>
   <div class="wide"><table>
-    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th></th></tr>
+    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr>
     {% for st in pending %}
     <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
       <td>{{ st.presenters or "" }}</td><td>{{ leds(st) }}</td><td>{{ controls(st) }}</td></tr>
@@ -106,7 +109,7 @@
 <section>
   <h2>🎬 To watch — missed live</h2>
   <div class="wide"><table>
-    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Recording</th><th></th></tr>
+    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Recording</th><th><span class="sr-only">Actions</span></th></tr>
     {% for st in to_watch %}
     <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
       <td>{{ st.presenters or "" }}</td><td><a href="{{ st.url }}" target="_blank" rel="noopener">Watch Recording</a></td>
@@ -118,7 +121,7 @@
 <section>
   <h2>⏳ Recording not yet issued</h2>
   <div class="wide"><table>
-    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th></th></tr>
+    <tr><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr>
     {% for st in awaiting %}
     <tr id="e{{ st.id }}"><td class="date">{{ when(st) }}</td><td>{{ title_cell(st) }}</td>
       <td>{{ st.presenters or "" }}</td><td>{{ leds(st) }}</td>
@@ -132,7 +135,7 @@
 <section>
   <h2>{{ year or "Undated" }}</h2>
   <div class="wide"><table>
-    <tr><th class="num">#</th><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Recording</th><th>Status</th><th></th></tr>
+    <tr><th class="num">#</th><th>Date</th><th>Event</th><th>Presenter(s)</th><th>Recording</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr>
     {% for n, st in rows %}
     <tr id="e{{ st.id }}"><td class="num">{{ n }}</td><td class="date">{{ when(st) }}</td>
       <td>{{ title_cell(st) }}</td><td>{{ st.presenters or "" }}</td>

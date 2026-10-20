@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{{ h.name }} · Hobbies · la-vie admin{% endblock %}
 {% from "_macros.html" import url_link, rule_form, requirement_select %}
 {% block content %}
 <p><a href="/admin/hobbies">← Hobbies</a></p>
@@ -6,7 +7,7 @@
 
 <section>
   <form method="post" action="/admin/hobbies/{{ h.id }}" class="row">
-    <input class="grow" type="text" name="name" value="{{ h.name }}" required>
+    <input class="grow" type="text" name="name" aria-label="Hobby name" value="{{ h.name }}" required>
     <label class="check"><input type="checkbox" name="active" {{ 'checked' if h.active }}> Active</label>
     <button class="primary">Save</button>
   </form>
@@ -22,17 +23,17 @@
       <form method="post" action="/admin/projects/{{ p.id }}">
         <div class="row">
           <button class="icon" name="action" value="toggle" title="Toggle done">{{ "☑" if p.done_at else "☐" }}</button>
-          <input class="grow {{ 'done' if p.done_at }}" type="text" name="name" value="{{ p.name }}">
+          <input class="grow {{ 'done' if p.done_at }}" type="text" name="name" aria-label="Project {{ loop.index }} name" value="{{ p.name }}">
           {% if not p.unlocked %}<span class="chip">locked</span>{% endif %}
           {{ url_link(p.url, "open") }}
         </div>
         <details style="margin-top:6px">
           <summary>Details</summary>
           <div class="grid">
-            <div><label>Link</label><input type="url" name="url" value="{{ p.url or '' }}"></div>
+            <div><label>Link</label><input aria-label="Link" type="url" name="url" value="{{ p.url or '' }}"></div>
             <div><label>Requires</label>{{ requirement_select("requires", p.requires_course_id, p.requires_path_id, courses, paths) }}</div>
           </div>
-          <div style="margin-top:8px"><label>Notes</label><textarea name="notes">{{ p.notes or '' }}</textarea></div>
+          <div style="margin-top:8px"><label>Notes</label><textarea aria-label="Notes" name="notes">{{ p.notes or '' }}</textarea></div>
           <div class="actions">
             <label class="check"><input type="checkbox" name="active" {{ 'checked' if p.active }}> Active</label>
             <button class="primary">Save</button>
@@ -48,11 +49,11 @@
 
   <form method="post" action="/admin/hobbies/{{ h.id }}/projects" style="margin-top:12px">
     <div class="grid">
-      <div><label>New project</label><input type="text" name="name" required></div>
-      <div><label>Link (optional)</label><input type="url" name="url"></div>
+      <div><label>New project</label><input aria-label="New project" type="text" name="name" required></div>
+      <div><label>Link (optional)</label><input aria-label="Link (optional)" type="url" name="url"></div>
       <div><label>Requires</label>{{ requirement_select("requires", None, None, courses, paths) }}</div>
     </div>
-    <div style="margin-top:8px"><label>Notes</label><textarea name="notes"></textarea></div>
+    <div style="margin-top:8px"><label>Notes</label><textarea aria-label="Notes" name="notes"></textarea></div>
     <div class="actions"><button class="primary">Add project</button></div>
   </form>
 </section>

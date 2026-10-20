@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}Movement · la-vie admin{% endblock %}
 {% from "_macros.html" import url_link %}
 {% block content %}
 <h1>Movement</h1>
@@ -22,7 +23,7 @@
     {% endfor %}
   </ul>
   <form method="post" action="/admin/routines" class="row" style="margin-top:12px">
-    <input class="grow" type="text" name="name" placeholder="New routine name" required>
+    <input class="grow" type="text" name="name" aria-label="New routine name" placeholder="New routine name" required>
     <button class="primary">Add routine</button>
   </form>
 </section>
@@ -53,7 +54,7 @@
     {% for m in moves %}
     <li>
       <form method="post" action="/admin/micro-moves/{{ m.id }}" class="row">
-        <input class="grow" type="text" name="text" value="{{ m.text }}">
+        <input class="grow" type="text" name="text" aria-label="Micro-move {{ loop.index }}" value="{{ m.text }}">
         <label class="check"><input type="checkbox" name="active" {{ 'checked' if m.active }}> active</label>
         <button class="icon">Save</button>
         <button class="icon danger" name="action" value="delete">Delete</button>
@@ -62,7 +63,7 @@
     {% endfor %}
   </ul>
   <form method="post" action="/admin/micro-moves" class="row" style="margin-top:12px">
-    <input class="grow" type="text" name="text" placeholder="New micro-move" required>
+    <input class="grow" type="text" name="text" aria-label="New micro-move" placeholder="New micro-move" required>
     <button class="primary">Add</button>
   </form>
 </section>

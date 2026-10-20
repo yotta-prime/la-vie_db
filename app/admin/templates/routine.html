@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{{ r.name }} · Movement · la-vie admin{% endblock %}
 {% from "_macros.html" import url_link %}
 {% block content %}
 <p><a href="/admin/movement">← Movement</a></p>
@@ -11,14 +12,14 @@
 <section>
   <form method="post" action="/admin/routines/{{ r.id }}">
     <div class="grid">
-      <div><label>Name</label><input type="text" name="name" value="{{ r.name }}" required></div>
-      <div><label>Duration (min)</label><input type="number" name="duration_min" min="1" value="{{ r.duration_min or '' }}"></div>
+      <div><label>Name</label><input aria-label="Name" type="text" name="name" value="{{ r.name }}" required></div>
+      <div><label>Duration (min)</label><input aria-label="Duration (min)" type="number" name="duration_min" min="1" value="{{ r.duration_min or '' }}"></div>
     </div>
     <div style="margin-top:10px">
       <label>Main video / link (optional)</label>
-      <input type="url" name="url" value="{{ r.url or '' }}" placeholder="https://www.youtube.com/… or https://www.dailyom.com/…">
+      <input aria-label="Main video / link (optional)" type="url" name="url" value="{{ r.url or '' }}" placeholder="https://www.youtube.com/… or https://www.dailyom.com/…">
     </div>
-    <div style="margin-top:10px"><label>Notes</label><textarea name="notes">{{ r.notes or '' }}</textarea></div>
+    <div style="margin-top:10px"><label>Notes</label><textarea aria-label="Notes" name="notes">{{ r.notes or '' }}</textarea></div>
     <div class="actions">
       <label class="check"><input type="checkbox" name="active" {{ 'checked' if r.active }}> Active</label>
       <button class="primary">Save</button>
@@ -33,8 +34,8 @@
     <li>
       <form method="post" action="/admin/routine-steps/{{ st.id }}" class="row">
         <span class="muted">{{ loop.index }}.</span>
-        <input class="grow" type="text" name="text" value="{{ st.text }}">
-        <input class="grow" type="url" name="url" value="{{ st.url or '' }}" placeholder="Video / link (optional)">
+        <input class="grow" type="text" name="text" aria-label="Item {{ loop.index }}" value="{{ st.text }}">
+        <input class="grow" type="url" name="url" aria-label="Item {{ loop.index }} link" value="{{ st.url or '' }}" placeholder="Video / link (optional)">
         <button class="icon">Save</button>
         <button class="icon" name="action" value="up" title="Move up">↑</button>
         <button class="icon" name="action" value="down" title="Move down">↓</button>
@@ -47,8 +48,8 @@
     {% endfor %}
   </ul>
   <form method="post" action="/admin/routines/{{ r.id }}/steps" class="row" style="margin-top:12px">
-    <input class="grow" type="text" name="text" placeholder="Exercise or video title" required>
-    <input class="grow" type="url" name="url" placeholder="Link (optional)">
+    <input class="grow" type="text" name="text" aria-label="New item" placeholder="Exercise or video title" required>
+    <input class="grow" type="url" name="url" aria-label="Link (optional)" placeholder="Link (optional)">
     <button class="primary">Add item</button>
   </form>
 </section>

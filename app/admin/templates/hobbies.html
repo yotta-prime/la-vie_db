@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}Hobbies · la-vie admin{% endblock %}
 {% block content %}
 <h1>Hobbies</h1>
 <section>
@@ -17,7 +18,7 @@
     {% endfor %}
   </ul>
   <form method="post" action="/admin/hobbies" class="row" style="margin-top:12px">
-    <input class="grow" type="text" name="name" placeholder="New hobby" required>
+    <input class="grow" type="text" name="name" aria-label="New hobby" placeholder="New hobby" required>
     <button class="primary">Add hobby</button>
   </form>
 </section>
