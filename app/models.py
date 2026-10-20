@@ -128,6 +128,16 @@ class Routine(Base):
     url: Mapped[str | None] = mapped_column(String(500))  # e.g. a full-class video
     notes: Mapped[str | None] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(default=True)
+    # Lessons of an outside course (e.g. DailyOM), loaded from a private content file
+    # (app/content.py): routines sharing a `series` are offered in `position` order.
+    series: Mapped[str | None] = mapped_column(String(160))
+    series_url: Mapped[str | None] = mapped_column(String(500))
+    section: Mapped[str | None] = mapped_column(String(200))
+    section_url: Mapped[str | None] = mapped_column(String(500))
+    position: Mapped[int] = mapped_column(default=0)
+    intro: Mapped[str | None] = mapped_column(Text)  # text before the video
+    outro: Mapped[str | None] = mapped_column(Text)  # text after the video (e.g. homework)
+    source_key: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
 
     steps: Mapped[list["RoutineStep"]] = relationship(
         back_populates="routine", order_by="RoutineStep.position", cascade="all, delete-orphan"

@@ -75,6 +75,10 @@ class ActionResult:
     extra: list[str] = field(default_factory=list)  # follow-up messages
 
 
+# Telegram allows 4096 characters per message; leave room for the streak and the reply status.
+ROUTINE_TEXT_MAX = 3600
+
+
 def link(url: str | None, label: str = "link") -> str:
     return f' · <a href="{html.escape(url, quote=True)}">{html.escape(label)}</a>' if url else ""
 
@@ -273,6 +277,8 @@ class Engine:
             if st:
                 text += f"\n\nStreak: {st} day{'s' if st != 1 else ''}"
             buttons = outcome_buttons(p.id)
+            if r is not None and r.series and r.url:
+                buttons = [[Button("▶ Open video", url=r.url)]] + buttons
 
         elif kind == "micro_move":
             last = s.scalar(
@@ -400,12 +406,26 @@ class Engine:
         head = f"<b>Movement: {html.escape(r.name)}</b>"
         if r.duration_min:
             head += f" ({r.duration_min} min)"
-        head += link(r.url, "open")
+        head += link(r.url, "video" if r.series else "open")
         lines = [head]
+        if r.series:
+            where = f"<i>{html.escape(r.series)}</i>{link(r.series_url, 'course')}"
+            if r.section:
+                where += f"\n<i>{html.escape(r.section)}</i>{link(r.section_url, 'section')}"
+            lines.append(where)
         if r.notes:
             lines.append(f"<i>{html.escape(r.notes)}</i>")
         lines += [f"{i}. {html.escape(st.text)}{link(st.url)}" for i, st in enumerate(r.steps, 1)]
-        return "\n".join(lines)
+        text = "\n".join(lines)
+        # Text from the lesson page around the video, collapsed; trimmed to Telegram's limit.
+        notes = [(label, body) for label, body in (("Before the video", r.intro), ("After the video", r.outro)) if body]
+        room = ROUTINE_TEXT_MAX - len(text) - 200
+        for label, body in notes:
+            share = max(room // len(notes), 0)
+            if len(body) > share:
+                body = body[: max(share - 40, 0)].rsplit(" ", 1)[0] + " … (more in the lesson)"
+            text += f"\n<blockquote expandable><b>{label}</b>\n{html.escape(body, quote=False)}</blockquote>"
+        return text
 
     def _session_text(self, s, kind: str, payload: dict) -> str:
         """Render the current candidate; also records the chosen project/step in payload."""

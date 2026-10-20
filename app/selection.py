@@ -219,7 +219,12 @@ def pick_project(s: Session, hobby: Hobby) -> HobbyProject | None:
 
 
 def pick_routine(s: Session) -> Routine | None:
-    """Round-robin over active routines: the one done least recently."""
+    """Your own routines and outside-course lessons (routines with a `series`) take turns.
+
+    Own routines: the one done least recently. Course lessons: carry on with the course in
+    progress, lesson by lesson in order; once it's finished, start the next course; once all
+    are finished, the lesson done least recently.
+    """
     routines = list(s.scalars(select(Routine).where(Routine.active).order_by(Routine.id)))
     if not routines:
         return None
@@ -230,7 +235,31 @@ def pick_routine(s: Session) -> Routine | None:
             .group_by(LogEntry.routine_id)
         ).all()
     )
-    return min(routines, key=lambda r: (last.get(r.id, NEVER), r.id))
+    own = [r for r in routines if not r.series]
+    lessons = [r for r in routines if r.series]
+    if lessons and own:
+        # Whichever kind was done less recently goes next; your own routines win a tie.
+        recent = lambda rs: max(last.get(r.id, NEVER) for r in rs)  # noqa: E731
+        use_own = recent(own) <= recent(lessons)
+    else:
+        use_own = bool(own)
+    if use_own:
+        return min(own, key=lambda r: (last.get(r.id, NEVER), r.id))
+    return _next_lesson(lessons, last)
+
+
+def _next_lesson(lessons: list[Routine], last: dict) -> Routine:
+    courses: dict[str, list[Routine]] = {}
+    for r in sorted(lessons, key=lambda r: (r.position, r.id)):
+        courses.setdefault(r.series, []).append(r)
+    unfinished = {name: rs for name, rs in courses.items() if any(r.id not in last for r in rs)}
+    if unfinished:
+        # The course you did most recently (if unfinished), else the first not yet started.
+        recent = {name: max((last.get(r.id, NEVER) for r in rs), default=NEVER) for name, rs in unfinished.items()}
+        order = list(courses)
+        name = max(unfinished, key=lambda n: (recent[n], -order.index(n)))
+        return next(r for r in unfinished[name] if r.id not in last)
+    return min(lessons, key=lambda r: (last[r.id], r.position, r.id))
 
 
 def pick_micro_move(s: Session, exclude_id: int | None = None, rng=random) -> MicroMove | None:

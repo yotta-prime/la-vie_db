@@ -5,9 +5,10 @@
 
 <section>
   <h2>Routines</h2>
-  <p class="muted">The morning prompt rotates through active routines. Items can be exercises or links to videos (YouTube, DailyOM…).</p>
+  <p class="muted">The morning prompt rotates through active routines. Items can be exercises or links to videos (YouTube, DailyOM…).
+    {% if routines|selectattr("series")|list %}Your routines and course lessons (below) take turns.{% endif %}</p>
   <ul class="list">
-    {% for r in routines %}
+    {% for r in routines|rejectattr("series") %}
     <li class="row">
       <a class="grow" href="/admin/routines/{{ r.id }}">{{ r.name }}</a>
       {% if r.duration_min %}<span class="chip">{{ r.duration_min }} min</span>{% endif %}
@@ -24,6 +25,25 @@
     <button class="primary">Add routine</button>
   </form>
 </section>
+
+{% for series, lessons in routines|selectattr("series")|groupby("series") %}
+<section>
+  <h2>{{ series }}</h2>
+  <p class="muted">Course lessons, offered in order: the course in progress continues until it's finished, then the next one starts.
+    Loaded from the private content file in the NAS data folder. {{ url_link(lessons[0].series_url, "course") }}</p>
+  <ul class="list">
+    {% for r in lessons|sort(attribute="position") %}
+    <li class="row">
+      <a class="grow" href="/admin/routines/{{ r.id }}">{{ r.name }}</a>
+      {% if r.section and r.section != r.name %}<span class="muted">{{ r.section }}</span>{% endif %}
+      {% if r.steps %}<span class="chip">{{ r.steps|length }} move{{ 's' if r.steps|length != 1 }}</span>{% endif %}
+      {% if not r.active %}<span class="chip">inactive</span>{% endif %}
+      {{ url_link(r.url, "video") }}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
 
 <section id="micro">
   <h2>Desk-break micro-moves</h2>

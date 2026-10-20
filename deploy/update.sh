@@ -44,7 +44,22 @@ main() {
     fi
 
     cd "$REPO"
-    git fetch --quiet origin main
+    # A failed fetch (e.g. DNS on the NAS) is logged with the time; after an hour of them in a
+    # row (four checks) you get one Telegram message.
+    fails="$BASE/logs/fetch-fails"
+    if ! err=$(git fetch --quiet origin main 2>&1); then
+        n=$(( $(cat "$fails" 2>/dev/null || echo 0) + 1 ))
+        echo "$n" > "$fails"
+        log "can't reach GitHub (check $n in a row): $(echo "$err" | head -n 1)"
+        if [ "$n" -eq 4 ]; then
+            notify "⚠️ la-vie: the NAS hasn't reached GitHub for an hour, so updates are paused. Last error: $(echo "$err" | head -n 1)"
+        fi
+        exit 1
+    fi
+    if [ -f "$fails" ]; then
+        log "reached GitHub again after $(cat "$fails") failed check(s)"
+        rm -f "$fails"
+    fi
     # Heartbeat: shows the schedule is running even when there's nothing to deploy.
     stamp > "$BASE/logs/last-check"
     local_rev=$(git rev-parse HEAD)

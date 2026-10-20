@@ -86,6 +86,21 @@ def test_all_pages_render(client):
         assert r.status_code == 200, page
 
 
+def test_movement_page_lists_course_lessons_by_course(client):
+    login(client)
+    with db(client).session() as s:
+        s.add(Routine(name="Posture", series="Hip Course", position=1, section="Lesson 2",
+                      url="https://courses.example/2", outro="Homework: walk."))
+        s.add(Routine(name="Find your hips", series="Hip Course", position=0, series_url="https://courses.example"))
+        s.flush()
+        rid = s.scalar(select(Routine.id).where(Routine.name == "Posture"))
+    page = client.get("/admin/movement").text
+    assert "<h2>Hip Course</h2>" in page
+    assert page.index("Find your hips") < page.index("Posture")
+    detail = client.get(f"/admin/routines/{rid}").text
+    assert "Hip Course" in detail and "Lesson 2" in detail and "Homework: walk." in detail
+
+
 def test_answers_and_trends_pages_show_replies(client):
     login(client)
     eng = client.app.state.engine

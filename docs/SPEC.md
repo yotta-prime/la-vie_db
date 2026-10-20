@@ -1,6 +1,6 @@
 # la-vie — daily life service: v1 spec
 
-Captured from the requirements interview, 2026-10-04. Last updated 2026-10-13 (learning content files, O'Reilly import, monitoring, Answers and Trends pages). See **Implementation status** at the end for what's built.
+Captured from the requirements interview, 2026-10-04. Last updated 2026-10-20 (learning content files, O'Reilly import, monitoring, Answers and Trends pages, DailyOM movement lessons). See **Implementation status** at the end for what's built.
 
 ## Overview
 
@@ -29,6 +29,7 @@ Desk job, ~9–5 on weekdays. Prompts are spread through the day:
 
 ### Movement
 - **Named routines** defined in admin (name, duration, steps); the prompt names today's routine and lists the steps.
+- **Course lessons as routines** (e.g. paid DailyOM courses): each lesson with a video becomes a routine carrying its course and section (with links), the list of movements, and the lesson text before and after the video (collapsed in Telegram, trimmed to fit, with a **▶ Open video** button). Your own routines and course lessons take turns; lessons run in order, one course at a time. Loaded add-only from a private file in the NAS data folder (`data/content/*.yaml`), never the public repo; built with `tools/dailyom_to_yaml.py` from a one-off export while signed in.
 - **Desk-break micro-moves**: short 2–5 min reminders at intervals during work hours.
 - **Logging**: inline buttons Done / Partial / Skip; streaks tracked.
 
@@ -166,7 +167,7 @@ All times are editable in the admin page.
 - **Spaced repetition**: FSRS (e.g. the `fsrs` Python package), with Again / Hard / Good / Easy buttons.
 - **Backups**: nightly SQLite online backup (`sqlite3` backup API) at 03:00 to a `backups/` folder, keeping 14, covered by Hyper Backup / Snapshot Replication.
 
-## Implementation status (2026-10-13)
+## Implementation status (2026-10-20)
 
 | Feature | Status |
 |---|---|
@@ -188,3 +189,4 @@ All times are editable in the admin page.
 | CI: tests on every push; NAS deploys only passing commits; Telegram alerts for failed tests/deploys | Built |
 | Reproducible builds: exact dependency versions, base image pinned by digest, Dependabot | Built |
 | Deploys restart the bot only for app changes (docs-only commits update the NAS copy without a restart) | Built |
+| DailyOM movement lessons as routines (private content file, schema v5), alternating with your own routines | Built |

@@ -11,7 +11,7 @@ from fastapi import FastAPI, Response
 from app import admin, heartbeat
 from app.bot import Bot
 from app.config import get_settings
-from app.content import import_content
+from app.content import CONTENT_DIR, import_content
 from app.db import Database
 from app.defaults import seed_content, seed_settings
 from app.engine import Engine
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     db = Database(f"sqlite:///{settings.db_path}")
     db.create_all()
     seed_settings(db)
-    import_content(db)
+    import_content(db, CONTENT_DIR, settings.data_dir / "content")
     seed_content(db)
 
     with db.session() as s:

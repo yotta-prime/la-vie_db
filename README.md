@@ -53,7 +53,7 @@ paths:
 courses: []                       # individual courses, same shape as above plus category
 ```
 
-The repo is public, so anything in `content/` is published.
+The repo is public, so anything in `content/` is published. Paid or private material goes in `data/content/*.yaml` on the NAS instead (same format, imported the same way, never committed). That's how the **DailyOM movement lessons** are loaded: `tools/dailyom_to_yaml.py` turns a one-off export of your DailyOM courses into a `routines:` file, whose lessons then take turns with your own routines in the morning movement prompt (course and section links, the movements, the lesson text, and a ▶ Open video button). See *Course lessons as routines* in [docs/SPEC.md](docs/SPEC.md).
 
 ## Telegram commands
 

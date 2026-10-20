@@ -48,6 +48,14 @@ def load_exclude() -> re.Pattern | None:
 
 EXCLUDE = load_exclude()
 
+# Literal strings (one per line, not committed) to redact wherever they appear, e.g. a
+# password pasted into the chat by mistake.
+_secrets = ROOT / "tools" / "chat-redact.local.txt"
+if _secrets.exists():
+    for _s in _secrets.read_text(encoding="utf-8").splitlines():
+        if _s.strip() and not _s.startswith("#"):
+            REDACT.append((re.compile(re.escape(_s.strip())), "[redacted]"))
+
 
 def excluded(text: str) -> bool:
     return bool(EXCLUDE and EXCLUDE.search(text))

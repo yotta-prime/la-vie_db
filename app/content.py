@@ -17,6 +17,16 @@ File format (see content/oreilly.yaml):
           - key, title, detail?, url?
             date?, time?, presenters?, attendance?   # live events; time "HH:MM" UK local;
                                                      # attendance registered|waitlisted|attended|missed
+    routines:           # movement lessons from an outside course (e.g. DailyOM), offered in order
+      - key, name, url?                              # the course
+        lessons:
+          - key, title, url?, section?, section_url?, duration_min?
+            intro?, outro?                           # text before / after the video
+            moves: [text, ...]                       # individual movements, in order
+
+Files in content/ are public (the repo is). Paid or private material goes in the data folder
+instead (`<DATA_DIR>/content/*.yaml`; on the NAS `/volume1/docker/lavie/data/content/`), which
+is imported the same way but never committed.
 """
 
 import logging
@@ -27,7 +37,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import Database
-from app.models import Attendance, Category, Course, CourseKind, CourseStep, LearningPath, utcnow
+from app.models import (
+    Attendance,
+    Category,
+    Course,
+    CourseKind,
+    CourseStep,
+    LearningPath,
+    Routine,
+    RoutineStep,
+    utcnow,
+)
 
 log = logging.getLogger(__name__)
 
@@ -109,9 +129,38 @@ def _hhmm(value) -> str | None:
     return f"{int(h):02d}:{int(m):02d}"
 
 
+def _routines(s: Session, series: dict, counts: dict) -> None:
+    for pos, lesson in enumerate(series.get("lessons", [])):
+        r = _by_key(s, Routine, lesson["key"])
+        if r is not None:
+            for field, value in (("url", lesson.get("url")), ("section_url", lesson.get("section_url")),
+                                 ("series_url", series.get("url"))):
+                if getattr(r, field) is None and value:
+                    setattr(r, field, value)
+                    counts["links"] += 1
+            continue
+        s.add(
+            Routine(
+                source_key=lesson["key"],
+                name=lesson["title"],
+                duration_min=lesson.get("duration_min"),
+                url=lesson.get("url"),
+                series=series["name"],
+                series_url=series.get("url"),
+                section=lesson.get("section"),
+                section_url=lesson.get("section_url"),
+                position=pos,
+                intro=lesson.get("intro"),
+                outro=lesson.get("outro"),
+                steps=[RoutineStep(position=i, text=m) for i, m in enumerate(lesson.get("moves") or [])],
+            )
+        )
+        counts["routines"] += 1
+
+
 def import_file(db: Database, file: Path) -> dict:
     data = yaml.safe_load(file.read_text(encoding="utf-8")) or {}
-    counts = {"paths": 0, "courses": 0, "lessons": 0, "links": 0}
+    counts = {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 0}
     with db.session() as s:
         for p in data.get("paths", []):
             path = _by_key(s, LearningPath, p["key"])
@@ -130,19 +179,24 @@ def import_file(db: Database, file: Path) -> dict:
                 _course(s, c, path, counts)
         for c in data.get("courses", []):
             _course(s, c, None, counts)
+        for r in data.get("routines", []):
+            _routines(s, r, counts)
     return counts
 
 
-def import_content(db: Database, content_dir: Path = CONTENT_DIR) -> None:
-    """Import every content/*.yaml file. A broken file is logged and skipped, never fatal."""
-    if not content_dir.is_dir():
-        return
-    for file in sorted(content_dir.glob("*.yaml")):
-        try:
-            counts = import_file(db, file)
-        except Exception:
-            log.exception("Content import failed for %s; skipped", file.name)
+def import_content(db: Database, *dirs: Path) -> None:
+    """Import every *.yaml file in content/ (and any extra folders, e.g. the private one in the
+    data folder). A broken file is logged and skipped, never fatal."""
+    for content_dir in dirs or (CONTENT_DIR,):
+        if not content_dir.is_dir():
             continue
-        if any(counts.values()):
-            log.info("Imported %s: %d paths, %d courses, %d lessons added; %d links filled in",
-                     file.name, counts["paths"], counts["courses"], counts["lessons"], counts["links"])
+        for file in sorted(content_dir.glob("*.yaml")):
+            try:
+                counts = import_file(db, file)
+            except Exception:
+                log.exception("Content import failed for %s; skipped", file.name)
+                continue
+            if any(counts.values()):
+                log.info("Imported %s: %d paths, %d courses, %d lessons, %d routines added; %d links filled in",
+                         file.name, counts["paths"], counts["courses"], counts["lessons"], counts["routines"],
+                         counts["links"])

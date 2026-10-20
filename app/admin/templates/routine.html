@@ -3,6 +3,10 @@
 {% block content %}
 <p><a href="/admin/movement">← Movement</a></p>
 <h1>{{ r.name }}</h1>
+{% if r.series %}
+<p class="muted">{{ r.series }} {{ url_link(r.series_url, "course") }}
+  {% if r.section %}<br>{{ r.section }} {{ url_link(r.section_url, "section") }}{% endif %}</p>
+{% endif %}
 
 <section>
   <form method="post" action="/admin/routines/{{ r.id }}">
@@ -48,6 +52,14 @@
     <button class="primary">Add item</button>
   </form>
 </section>
+
+{% if r.intro or r.outro %}
+<section>
+  <h2>Lesson text</h2>
+  {% if r.intro %}<details open><summary>Before the video</summary><p style="white-space:pre-wrap">{{ r.intro }}</p></details>{% endif %}
+  {% if r.outro %}<details><summary>After the video</summary><p style="white-space:pre-wrap">{{ r.outro }}</p></details>{% endif %}
+</section>
+{% endif %}
 
 <form method="post" action="/admin/routines/{{ r.id }}/delete" onsubmit="return confirm('Delete this routine?')">
   <button class="danger">Delete routine</button>

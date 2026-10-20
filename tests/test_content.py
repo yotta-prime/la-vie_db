@@ -7,7 +7,7 @@ from sqlalchemy import select
 from app.content import CONTENT_DIR, import_file
 from app.db import Database
 from app.migrations import LATEST
-from app.models import Course, CourseStep, LearningPath, utcnow
+from app.models import Course, CourseStep, LearningPath, Routine, utcnow
 
 OREILLY = CONTENT_DIR / "oreilly.yaml"
 
@@ -21,7 +21,7 @@ def db(tmp_path):
 
 
 def test_oreilly_file_matches_approved_allocation(db):
-    assert import_file(db, OREILLY) == {"paths": 3, "courses": 10, "lessons": 52, "links": 0}
+    assert import_file(db, OREILLY) == {"paths": 3, "courses": 10, "lessons": 52, "routines": 0, "links": 0}
     with db.session() as s:
         paths = {p.name: [c.name for c in p.courses] for p in s.scalars(select(LearningPath))}
         assert paths == {
@@ -66,7 +66,7 @@ def test_links_filled_into_existing_lessons_but_never_overwritten(db, tmp_path):
             "https://example.org/mine"
 
     counts = import_file(db, OREILLY)
-    assert counts == {"paths": 0, "courses": 0, "lessons": 0, "links": 42}
+    assert counts == {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 42}
     with db.session() as s:
         mine = s.scalar(select(CourseStep).where(CourseStep.source_key == "oreilly-2026-09-17-vibe-vs-spec"))
         assert mine.url == "https://example.org/mine"
@@ -88,14 +88,14 @@ def test_reimport_adds_only_new_and_keeps_admin_edits(db, tmp_path):
         c.name = "Data (renamed in admin)"
         c.steps[0].done_at = utcnow()
 
-    assert import_file(db, OREILLY) == {"paths": 0, "courses": 0, "lessons": 0, "links": 0}
+    assert import_file(db, OREILLY) == {"paths": 0, "courses": 0, "lessons": 0, "routines": 0, "links": 0}
 
     extra = tmp_path / "extra.yaml"
     extra.write_text(yaml.safe_dump({"courses": [{
         "key": "oreilly-data", "name": "Data", "category": "professional",
         "lessons": [{"key": "oreilly-2026-10-27-data", "title": "What's Happening in Data (27 Oct)"}],
     }]}), encoding="utf-8")
-    assert import_file(db, extra) == {"paths": 0, "courses": 0, "lessons": 1, "links": 0}
+    assert import_file(db, extra) == {"paths": 0, "courses": 0, "lessons": 1, "routines": 0, "links": 0}
 
     with db.session() as s:
         c = s.scalar(select(Course).where(Course.source_key == "oreilly-data"))
@@ -130,6 +130,10 @@ def test_migrates_v1_database_to_latest(tmp_path):
         con.execute(f"ALTER TABLE {table} DROP COLUMN source_key")
     for col in ("event_date", "event_time", "presenters", "attendance", "attendance_asked_at", "recording_notified_at"):
         con.execute(f"ALTER TABLE course_step DROP COLUMN {col}")
+    con.execute("DROP INDEX ix_routine_source_key")
+    for col in ("series", "series_url", "section", "section_url", "position", "intro", "outro", "source_key"):
+        con.execute(f"ALTER TABLE routine DROP COLUMN {col}")
+    con.execute("INSERT INTO routine (id, name, active) VALUES (1, 'Morning', 1)")
     con.execute("UPDATE schema_version SET version = 1")
     con.execute("INSERT INTO course (id, position, name, category, kind, active) "
                 "VALUES (1, 0, 'Mine', 'hobby', 'steps', 1)")
@@ -141,7 +145,9 @@ def test_migrates_v1_database_to_latest(tmp_path):
     assert import_file(d, OREILLY)["lessons"] == 52
     with d.session() as s:
         assert s.get(Course, 1).name == "Mine" and s.get(Course, 1).source_key is None
+        r = s.get(Routine, 1)
+        assert (r.name, r.series, r.position) == ("Morning", None, 0)
     d.engine.dispose()
     (version,) = sqlite3.connect(path).execute("SELECT version FROM schema_version").fetchone()
-    assert version == LATEST == 4
-    assert (tmp_path / "v1.db.pre-v4.bak").exists()
+    assert version == LATEST == 5
+    assert (tmp_path / "v1.db.pre-v5.bak").exists()

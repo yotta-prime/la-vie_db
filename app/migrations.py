@@ -85,11 +85,30 @@ def _m004_event_time(cur: sqlite3.Cursor, engine: Engine) -> None:
         cur.execute("ALTER TABLE course_step ADD COLUMN event_time VARCHAR(5)")
 
 
+def _m005_routine_series(cur: sqlite3.Cursor, engine: Engine) -> None:
+    """Routines from outside courses: course/section names and links, text around the video."""
+    cols = {row[1] for row in cur.execute("PRAGMA table_info(routine)")}
+    for col, typ in [
+        ("series", "VARCHAR(160)"),
+        ("series_url", "VARCHAR(500)"),
+        ("section", "VARCHAR(200)"),
+        ("section_url", "VARCHAR(500)"),
+        ("position", "INTEGER NOT NULL DEFAULT 0"),
+        ("intro", "TEXT"),
+        ("outro", "TEXT"),
+        ("source_key", "VARCHAR(100)"),
+    ]:
+        if col not in cols:
+            cur.execute(f"ALTER TABLE routine ADD COLUMN {col} {typ}")
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_routine_source_key ON routine (source_key)")
+
+
 MIGRATIONS: list[tuple[int, Callable[[sqlite3.Cursor, Engine], None]]] = [
     (1, _m001_courses),
     (2, _m002_source_keys),
     (3, _m003_events),
     (4, _m004_event_time),
+    (5, _m005_routine_series),
 ]
 LATEST = MIGRATIONS[-1][0]
 
