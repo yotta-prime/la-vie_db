@@ -3,22 +3,35 @@
 {% block content %}
 {% set state_label = {"done": "Done", "partial": "Partly done", "skipped": "Skipped", "missed": "Missed (no reply)",
                       "awaiting": "Sent, waiting for your reply", "planned": "Planned", "off": "Not planned"} %}
+{# Each state has a symbol as well as a colour, so it never depends on colour alone. #}
+{% set state_sym = {"done": "✓", "partial": "½", "skipped": "✗", "missed": "!", "awaiting": "…"} %}
+{% macro state(s) -%}
+  <span class="state" role="img" aria-label="{{ state_label[s] }}" title="{{ state_label[s] }}"><span class="led led-{{ s }}"></span><span class="sym" aria-hidden="true">{{ state_sym[s] }}</span></span>
+{%- endmacro %}
 <style>
   .plan { table-layout: fixed; width: 100%; max-width: 560px; }
   .plan th, .plan td { text-align: center; padding: 6px 4px; }
-  .plan th.d, .plan td.d { text-align: left; width: 34%; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .plan tr.we td { background: color-mix(in srgb, var(--line) 35%, transparent); }
-  .plan tr.today td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); font-weight: 600; }
-  .plan input[type=checkbox] { width: 20px; height: 20px; margin: 0; cursor: pointer; }
-  .plan th button { font-size: 11px; padding: 2px 6px; margin-top: 4px; }
-  .led { width: 12px; height: 12px; border-radius: 50%; display: inline-block; vertical-align: middle; }
+  .plan th.d { text-align: left; width: 34%; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .plan tr + tr th.d { font-weight: 400; }
+  .plan tr.today th.d { font-weight: 600; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .plan tr.we td, .plan tr.we th { background: color-mix(in srgb, var(--line) 35%, transparent); }
+  .plan tr.today td, .plan tr.today th { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); font-weight: 600; }
+  .plan input[type=checkbox] { width: 24px; height: 24px; margin: 0; cursor: pointer; }
+  .plan th button { font-size: 12px; padding: 2px 8px; margin-top: 4px; min-height: 28px; }
+  .plan .d .now { font: 600 11px/1 var(--font-heading); letter-spacing: .08em; text-transform: uppercase; color: var(--link); margin-left: 6px; }
+  .state { display: inline-flex; align-items: center; gap: 4px; }
+  .sym { font-weight: 700; font-size: 13px; min-width: 9px; color: var(--text); }
+  .led { width: 12px; height: 12px; border-radius: 50%; display: inline-block; vertical-align: middle; outline: 1px solid var(--ring); }
   .led-done { background: #3f9c5f; box-shadow: 0 0 5px #3f9c5f; }
   .led-partial { background: #e6c83a; box-shadow: 0 0 5px #e6c83a; }
   .led-skipped, .led-missed { background: #e8772e; box-shadow: 0 0 5px #e8772e; }  /* orange: red is kept for time-bound items */
   .led-awaiting, .led-planned { background: #9a9da3; }
   .off { color: var(--muted); }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin: 8px 0 16px; }
-  .monthnav { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .monthnav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .monthnav a { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px;
+                font-size: 20px; text-decoration: none; border: 1px solid var(--line); }
   .monthnav h2 { margin: 0; }
   .slots { display: grid; grid-template-columns: 90px 110px 1fr; gap: 8px 12px; align-items: center; max-width: 620px; }
   @media (max-width: 600px) { .slots { grid-template-columns: 70px 100px 1fr; } }
@@ -39,8 +52,8 @@
       {% for slot, label in slot_labels.items() %}
         {% set cur = slots.get(slot, {}) %}
         <label for="{{ slot }}_time">{{ label }}</label>
-        <input id="{{ slot }}_time" type="time" name="{{ slot }}_time" value="{{ cur.time }}" required>
-        <select name="{{ slot }}_source">
+        <input id="{{ slot }}_time" type="time" aria-label="{{ label }} time" name="{{ slot }}_time" value="{{ cur.time }}" required>
+        <select name="{{ slot }}_source" aria-label="What the {{ label|lower }} slot offers">
           <option value="rotation" {{ 'selected' if cur.source == 'rotation' }}>Rotation</option>
           <option value="own" {{ 'selected' if cur.source == 'own' }}>Your own routines</option>
           {% for c in courses %}
@@ -65,26 +78,25 @@
     {% if planned %}{{ planned }} still to come.{% endif %}</p>
   {% elif planned %}<p>{{ planned }} slot{{ 's' if planned != 1 }} planned.</p>{% endif %}
   <div class="legend">
-    <span><span class="led led-done"></span> Done</span>
-    <span><span class="led led-partial"></span> Partly done</span>
-    <span><span class="led led-missed"></span> Missed or skipped</span>
-    <span><span class="led led-awaiting"></span> Waiting for your reply</span>
+    {% for s in ["done", "partial", "skipped", "missed", "awaiting"] %}<span>{{ state(s) }} {{ state_label[s] }}</span>{% endfor %}
     <span>☐ / ☑ Still to come: tick to plan</span>
   </div>
 
   <form method="post" action="/admin/movement/plan">
     <input type="hidden" name="month" value="{{ month }}">
     <table class="plan">
+      <caption class="sr-only">Movement plan for {{ title }}</caption>
       <tr>
-        <th class="d">Date</th>
+        <th class="d" scope="col">Date</th>
         {% for slot, label in slot_labels.items() %}
-        <th>{{ label }}<br><span class="muted" style="font-weight:400">{{ slots.get(slot, {}).time }}</span><br>
-          <button type="button" data-col="{{ slot }}" title="Tick or untick every remaining {{ label|lower }}">All</button></th>
+        <th scope="col">{{ label }}<br><span class="muted" style="font-weight:400">{{ slots.get(slot, {}).time }}</span><br>
+          <button type="button" data-col="{{ slot }}" aria-label="Tick or untick every remaining {{ label|lower }} this month"
+                  title="Tick or untick every remaining {{ label|lower }} this month">All</button></th>
         {% endfor %}
       </tr>
       {% for d in days %}
       <tr class="{{ 'we' if d.day.weekday() >= 5 }} {{ 'today' if d.day == today }}">
-        <td class="d">{{ WEEKDAYS[d.day.weekday()] }} {{ d.day.day }}</td>
+        <th class="d" scope="row"{% if d.day == today %} aria-current="date"{% endif %}>{{ WEEKDAYS[d.day.weekday()] }} {{ d.day.day }}{% if d.day == today %}<span class="now">Today</span>{% endif %}</th>
         {% for slot in slot_labels %}
           {% set c = d.cells[slot] %}
           <td>
@@ -92,9 +104,9 @@
               <input type="checkbox" name="t-{{ d.day.isoformat() }}-{{ slot }}" data-col="{{ slot }}" {{ 'checked' if c.ticked }}
                      aria-label="{{ slot_labels[slot] }} {{ d.day.day }} {{ d.day.strftime('%b') }}">
             {% elif c.state == "off" %}
-              <span class="off" title="Not planned">–</span>
+              <span class="off" role="img" aria-label="Not planned" title="Not planned">–</span>
             {% else %}
-              <span class="led led-{{ c.state }}" title="{{ state_label[c.state] }}" role="img" aria-label="{{ state_label[c.state] }}"></span>
+              {{ state(c.state) }}
             {% endif %}
           </td>
         {% endfor %}

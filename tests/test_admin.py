@@ -111,6 +111,45 @@ def test_movement_plan_page_ticks_and_slots(client):
     assert "HH:MM" in client.post("/admin/movement/slots", data={"month": month, "morning_time": "7am"}).text
 
 
+def test_movement_plan_ignores_past_slots_and_replans_today(client):
+    login(client)
+    eng = client.app.state.engine
+    now = datetime.now(timezone.utc)
+    today = eng.today(now)
+    past = today - timedelta(days=1)
+    with db(client).session() as s:
+        s.add(MovementPlan(day=past, slot="morning"))
+        # A slot time comfortably later today, so it's still editable whatever time the test runs.
+        later = (now.astimezone(eng.tz) + timedelta(minutes=30)).strftime("%H:%M")
+        if later < now.astimezone(eng.tz).strftime("%H:%M"):  # past midnight: nothing left to plan today
+            pytest.skip("too close to midnight")
+        slots = dict(s.get(Setting, "movement_slots").value)
+        slots["night"] = {"time": later, "source": "rotation"}
+        s.get(Setting, "movement_slots").value = slots
+    month = f"{today:%Y-%m}"
+    # Bypassing the page: tick a past slot, and leave out yesterday's tick (which would untick it).
+    form = {"month": month, f"t-{past.isoformat()}-evening": "on", f"t-{today.isoformat()}-night": "on"}
+    r = client.post("/admin/movement/plan", data=form)
+    assert "Plan saved" in r.text
+    with db(client).session() as s:
+        cells = {(p.day, p.slot) for p in s.scalars(select(MovementPlan))}
+        assert (past, "morning") in cells and (past, "evening") not in cells
+        assert (today, "night") in cells
+        planned = [p for p in s.scalars(select(Prompt).where(Prompt.kind == "routine"))
+                   if (p.payload or {}).get("slot") == "night" and p.status == PromptStatus.SCHEDULED]
+        assert len(planned) == 1
+
+
+def test_movement_plan_page_accessibility_basics(client):
+    login(client)
+    page = client.get("/admin/movement/plan").text
+    assert 'aria-current="date"' in page and ">Today<" in page
+    for label in ("What the morning slot offers", "Morning time", "Tick or untick every remaining night this month"):
+        assert f'aria-label="{label}' in page
+    # Status keys carry a symbol and a text label, not colour alone.
+    assert 'role="img" aria-label="Done"' in page and ">✓<" in page
+
+
 def test_movement_page_lists_course_lessons_by_course(client):
     login(client)
     with db(client).session() as s:

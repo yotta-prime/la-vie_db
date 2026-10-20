@@ -26,6 +26,9 @@
     --accent-text: var(--color-bg); --link: var(--color-accent-700); --link-hover: var(--color-accent-800);
     --chip: var(--color-accent-100); --chip-text: var(--color-accent-800);
     --danger: #a33a2c; --done: var(--color-neutral-500);
+    /* Filled buttons: a darker blue than --accent so their text passes 4.5:1 (WCAG AA). */
+    --btn: var(--color-accent-700); --btn-hover: var(--color-accent-800);
+    --ring: rgba(29, 31, 32, .55);  /* outline that keeps status dots visible on light rows */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -36,6 +39,7 @@
       --accent-text: var(--color-accent-900); --link: var(--color-accent-400); --link-hover: var(--color-accent-300);
       --chip: var(--color-accent-900); --chip-text: var(--color-accent-200);
       --danger: #e07a6a; --done: var(--color-neutral-700);
+      --btn: var(--accent); --btn-hover: var(--accent-hover); --ring: rgba(245, 245, 248, .45);
     }
   }
   *, *::before, *::after { box-sizing: border-box; }
@@ -109,8 +113,8 @@
                  font: 600 14px/1.2 var(--font-heading); letter-spacing: .03em; }
   button:hover, .btn:hover { background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
   button:active, .btn:active { background: color-mix(in srgb, var(--text) 14%, transparent); }
-  button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
-  button.primary:hover, .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-text); }
+  button.primary, .btn.primary { background: var(--btn); border-color: var(--btn); color: var(--accent-text); }
+  button.primary:hover, .btn.primary:hover { background: var(--btn-hover); border-color: var(--btn-hover); color: var(--accent-text); }
   button.primary:active, .btn.primary:active { background: var(--accent-press); border-color: var(--accent-press); }
   button.danger { color: var(--danger); }
   button.danger:hover { background: color-mix(in srgb, var(--danger) 8%, transparent); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
