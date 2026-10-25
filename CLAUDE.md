@@ -2,6 +2,8 @@
 
 Personal Telegram prompt service on a Synology DS220+ (`192.168.0.198`). What it does: [docs/SPEC.md](docs/SPEC.md); deploy and ops: [docs/DEPLOY.md](docs/DEPLOY.md); improvement plan and progress: [docs/REVIEW-2026-10.md](docs/REVIEW-2026-10.md).
 
+Admin site (LAN): http://192.168.0.198:8080/admin — direct links to every page are in the README's *Admin page* table.
+
 ## Ground rules
 
 - **This repo is public.** Never put passwords, tokens or app passwords in files or chat. Secrets live only in `/volume1/docker/lavie/secrets/.env` on the NAS (and the local, untracked `.env`); the user types them into the NAS terminal themselves.

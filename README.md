@@ -13,6 +13,21 @@ Personal daily-life service: Telegram prompts for movement, focus, learning path
 
 **http://192.168.0.198:8080/admin** (on the NAS; generally `http://<nas-ip>:8080/admin`)
 
+Direct links (home network only):
+
+| Page | Link |
+|---|---|
+| Today (the day's prompts, re-plan) | http://192.168.0.198:8080/admin |
+| Answers | http://192.168.0.198:8080/admin/answers |
+| Trends | http://192.168.0.198:8080/admin/trends |
+| Movement (routines, DailyOM lessons, micro-moves) | http://192.168.0.198:8080/admin/movement |
+| Movement plan (month grid) | http://192.168.0.198:8080/admin/movement/plan |
+| Learning (paths and courses) | http://192.168.0.198:8080/admin/learning |
+| O'Reilly events | http://192.168.0.198:8080/admin/oreilly |
+| Hobbies | http://192.168.0.198:8080/admin/hobbies |
+| Settings | http://192.168.0.198:8080/admin/settings |
+| Health check (no sign-in) | http://192.168.0.198:8080/health |
+
 - **Answers** tab (`/admin/answers`): what la-vie asked in Telegram and what you replied (buttons, focus ratings, typed replies such as your daily intention), plus `/log` entries, by day; filter by period and area. Unanswered prompts are greyed out.
 - **Trends** tab (`/admin/trends`): week-by-week progress (Monday to Sunday) for movement, focus, learning, hobbies and reply rate: a small bar chart per measure, last week vs the week before, and this week so far. Worked out from the stored answers, so it covers everything since la-vie started.
 - **Movement plan** (`/admin/movement/plan`, linked from the Movement tab): a month grid of dates with **Morning / Evening / Night** checkboxes. Tick a slot and that day gets a movement prompt in Telegram at the slot's time (06:30 / 18:00 / 20:30 by default); a new month starts with nothing ticked, and an **All** button per column ticks the rest of the month. Each slot can offer the rotation, your own routines, or one course (e.g. Psoas in the evening). Past slots turn into coloured dots (done green, partly done yellow, missed or skipped orange) with the month's completion rate. Saving re-plans the rest of today.
