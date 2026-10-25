@@ -1,6 +1,6 @@
 # la-vie_db: session chat history
 
-Claude Code session `ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac`, 4, 12, 13 and 20 October 2026 (times are UK local). Exported from the session transcript
+Claude Code session `ef6f4c02-4ae1-4545-bbb6-eb2ea554e5ac`, 4, 12, 13, 20 and 25 October 2026 (times are UK local). Exported from the session transcript
 by `tools/export_chat.py`: user and assistant messages are verbatim; tool calls are listed one per line;
 tool output, system notes and secrets are omitted.
 
@@ -5770,5 +5770,181 @@ Docs are updated. Next I'm exporting this session's chat history and checking it
 <details><summary>Tool calls</summary>
 
 - *PowerShell*: Export chat history and scan it
+
+</details>
+
+Clean on every check: no pasted password, tokens, session cookies, other-project material or course text. Committing and pushing.
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Commit docs and chat history; push
+- *PowerShell*: Wait for NAS to pick up 24d6e2b (docs only)
+
+</details>
+
+The chat history is saved, and the docs are updated for today's work. Both are pushed as `24d6e2b`; your PC and GitHub match. The NAS will pick it up in its next check, and I'll confirm that once I see it. Today's commit is docs only, so la-vie won't restart; the app on the NAS stays on `6a6d6c0`.
+
+- **Chat history:** `docs/chat-history/2026-10-04_la-vie-build-session.md` now runs through today, 20 Oct. Before committing I scanned it and found none of these:
+  - your DailyOM password
+  - bot or GitHub tokens
+  - test session cookies
+  - material from other projects
+  - DailyOM course text
+- **Docs:**
+  - The specification covers lesson text between videos and that re-importing refreshes it; it also records the WCAG check.
+  - The improvements review's progress table now includes the Movement plan and the DailyOM lessons.
+  - The deploy guide covers how the private content file is re-imported.
+
+**Waiting for you:**
+- **DailyOM:**
+  - Add any of the 5 courses I left out?
+  - Keep the long lessons shortened in Telegram?
+  - Pull out the Psoas movement lists by hand?
+- **Telegram O'Reilly buttons:** status shown by emoji colour alone; give them different shapes, or add a word?
+- **Change your DailyOM password**, since it was pasted into the chat. The export redacts it, but it's still in the session transcript on your PC.
+- **Add `1.1.1.1` as a second DNS server in DSM** (Control Panel → Network → General), to stop the NAS's occasional failed GitHub checks.
+- **From earlier:**
+  - healthchecks.io for the heartbeat
+  - Hyper Backup on the NAS
+  - the event times for 13 and 15 Oct
+  - the Gmail account and app password for the O'Reilly email importer
+
+To pick up again, use `/resume`.
+
+# Sunday 25 October 2026
+
+## You · 19:05
+
+check current versions are OK after update of DSM, also is documentation updated with local admin page links?
+
+<details><summary>Tool calls</summary>
+
+- *PowerShell*: Check git, NAS health/version, update schedule after DSM update
+- *PowerShell*: Check backups and DB activity; list admin links in docs
+- *Read*: README.md
+- *Edit*: README.md
+- *Edit*: CLAUDE.md
+- *PowerShell*: Verify every documented admin link responds on the NAS
+- *PowerShell*: Confirm 303 means the page exists; commit and push docs
+
+</details>
+
+## Claude · 19:07
+
+Everything is working after the DSM update:
+
+- **la-vie:** running and connected to Telegram, on `6a6d6c0` (the last version with app changes).
+- **Automatic updates:** still running every 15 minutes; the most recent check was 19:00 today. There have been no failed GitHub checks since 20 Oct.
+- **Nightly backups:** ran at 03:00 on 23, 24 and 25 October.
+- **Code:** your PC and GitHub match, with nothing uncommitted.
+
+The documentation didn't have the admin links, so I added them. The README's *Admin page* section now has a table of direct links, and CLAUDE.md points to it. I tested each link on the NAS: all 9 admin pages exist and ask you to sign in, and the health check answers. A made-up page returns "not found", so the sign-in redirect does show each page is real.
+
+| Page | Link |
+|---|---|
+| Today | http://192.168.0.198:8080/admin |
+| Answers | http://192.168.0.198:8080/admin/answers |
+| Trends | http://192.168.0.198:8080/admin/trends |
+| Movement | http://192.168.0.198:8080/admin/movement |
+| Movement plan | http://192.168.0.198:8080/admin/movement/plan |
+| Learning | http://192.168.0.198:8080/admin/learning |
+| O'Reilly | http://192.168.0.198:8080/admin/oreilly |
+| Hobbies | http://192.168.0.198:8080/admin/hobbies |
+| Settings | http://192.168.0.198:8080/admin/settings |
+| Health check | http://192.168.0.198:8080/health |
+
+I pushed this as `84a084b`. It only changes docs, so the NAS will update its copy at its next check without restarting la-vie.
+
+## You · 19:07
+
+tell me more about the nightly backups, what is backed up and to where?
+
+<details><summary>Tool calls</summary>
+
+- *Grep*: def backup|backup_dir|KEEP|keep|\.backup\(|strftime
+- *PowerShell*: Inspect backup folder and data folder on the NAS
+
+</details>
+
+## Claude · 19:08
+
+Each night la-vie backs up its database to a folder on the same NAS disk. That covers all your history and settings, but nothing yet copies it off the NAS.
+
+**What's backed up**
+
+The whole la-vie database (`lavie.db`). It holds everything you've built up:
+- your answers and `/log` entries, and with them the Trends history
+- the Movement plan ticks
+- routines, including the imported DailyOM lessons and their text
+- learning paths, courses and O'Reilly events, with attended/watched status
+- hobbies, schedules and all settings
+
+**How and when**
+- **Time:** every night at 03:00 UK time. You can change this in Settings → *Nightly backup at*.
+- **Method:** SQLite's own online backup, so the copy is consistent even while la-vie is running.
+- **Retention:** each night writes a new dated file, and la-vie keeps the latest **14** and deletes older ones.
+- **Filenames:** they use UTC because the container has no time zone set. That's why files from before the clocks changed say `…-020000` even though they ran at 03:00 BST. It's harmless, but I can fix it.
+
+**Where it goes**
+- **Folder:** `/volume1/docker/lavie/data/backups/` on the NAS, `\\192.168.0.198\docker\lavie\data\backups\` from your PC.
+- **Current state:** 14 files totalling 3.4 MB, from 11 Oct (112 KB) to 25 Oct (448 KB).
+- **Upgrade copies:** next to the database there are also the copies la-vie saves before each database upgrade (`lavie.db.pre-v1.bak` to `pre-v5.bak`).
+- **My snapshot:** there's a one-off copy from 20 Oct on your PC at `data\nas-snapshot\`.
+
+**What isn't backed up**
+
+| Item | Where it lives | Risk if lost |
+|---|---|---|
+| Secrets file (bot token, admin password) | `/volume1/docker/lavie/secrets/.env` | You'd need to re-create the bot token and password; the plan was to keep these in your password manager |
+| DailyOM private file `dailyom.yaml` | NAS `data/content/`, plus a copy on your PC (`data\content\`) | Low: your PC has a copy, and the lessons are also in the database |
+| Code and public content | GitHub | None |
+| Logs | `logs/` | None |
+
+**The gap: everything is on one disk**
+
+All 14 backups sit on the same NAS volume as the live database. If that disk or the NAS fails, or ransomware hits it, you lose the database and every backup together.
+
+That's improvement #4 in the review, still not started:
+- **Hyper Backup in DSM:** back up `/docker/lavie/` to Synology C2 or a USB disk, encrypted, since it would include the secrets file.
+- **A restore drill:** restore one backup into a scratch copy of la-vie, once, to prove it works.
+
+Setting up Hyper Backup is a DSM job for you, but I can write the exact steps and do the restore drill with you afterwards. Do you want that, and should I fix the UTC filenames too?
+
+## You · 19:09
+
+I want all future backups, including the 14 that are there, pushed/moved to Google Drive (same credentials as my Gmail account <dbarbour@gmail.com>)
+
+## Claude · 19:09
+
+The simplest way to get every backup into your Google Drive is **Cloud Sync**, Synology's own app for this. It runs on the NAS, so it works when your PC is off. On its first run it uploads the 14 existing backups, then uploads each new one within minutes of 03:00.
+
+You'll need to sign in to Google yourself during setup, because I can't enter passwords or approve access for you. The steps:
+
+1. **Install Cloud Sync:** in DSM, open **Package Center**, search for **Cloud Sync** and install it.
+2. **Connect Google Drive:** open Cloud Sync, click **+**, choose **Google Drive**, and sign in as dbarbour@gmail.com in the Google window. Check the permissions Google lists (Drive access for Synology Cloud Sync), then click Allow.
+3. **Choose the folders and direction:**
+   - **Local path:** `docker/lavie/data/backups`
+   - **Remote path:** create a new folder, e.g. `la-vie backups`
+   - **Sync direction:** **Upload local changes only**
+   - Tick **Don't remove files in the destination folder when they are removed in the source folder**. This is what keeps every backup in Drive. Without it, Drive would mirror the NAS and also keep only 14.
+   - **Data encryption:** leave it **off** so the files stay usable straight from Drive. Turning it on adds protection, but then you'd need Synology's tool and the key to restore.
+4. **Schedule:** leave it unset, so it syncs continuously. Then click **Apply** and wait for the 14 files to show as synced.
+
+When you tell me it's done, I'll check from here that the 14 files are in the Drive folder (I have read access to your Drive in this chat). After 03:00 tomorrow, I'll check that the new backup arrives on its own. I'll also add this to the deploy guide.
+
+Two choices to confirm:
+- **"Moved" or copied?** I recommend copying, so the NAS keeps its rolling 14 for quick restores while Drive keeps everything. If you want the NAS copies deleted after upload, I'd need to change la-vie's backup job. That's riskier, because a failed upload would then lose a backup.
+- **Should other files go to Drive too?** The secrets file shouldn't go to Drive, because it would sit there unencrypted; your password manager is the place for those values. The private `dailyom.yaml` could go in the same Drive folder if you want; your PC already has a copy.
+
+## You · 19:12
+
+Thanks for that, add this to future features list (TBD), I will come back to this tonight or tomorrow. Meanwhile, polease update chat history, also sevae FFL/TBD as a .md file; then sync all local/gh/dsm; make ready for sraightforward resume..
+
+<details><summary>Tool calls</summary>
+
+- *Edit*: CLAUDE.md
+- *Edit*: README.md
+- *Edit*: CLAUDE.md
+- *PowerShell*: Export and scan chat history; commit and push
 
 </details>
